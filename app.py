@@ -9,7 +9,7 @@ app.debug = True
 conn = pymysql.connect(host='localhost',
                        user='root',
                        password='',
-                       db='airports_stuff',
+                       db='airline',
                        charset='utf8mb4',
                        cursorclass=pymysql.cursors.DictCursor)
 
@@ -21,6 +21,8 @@ def hello():
 #Define route for customer_login
 @app.route('/customerLogin')
 def customer_login():
+    if 'cust' in session:
+        return redirect('/custHome')
     return render_template('customer_login.html')
 
 #Authenticates the customer_login
@@ -29,7 +31,6 @@ def customer_loginAuth():
     #grabs information from the forms
     username = request.form['username']
     password = hashlib.md5(request.form['password'].encode()).hexdigest()
-    print(password)
     #cursor used to send queries
     cursor = conn.cursor()
     #executes query
@@ -41,19 +42,20 @@ def customer_loginAuth():
     cursor.close()
     error = None
     if(data):
-        #creates a session for the the user
-        #session is a built in
-        session['username'] = username
-        # TODO: Have to change the redirect below
-        return redirect(url_for('home'))
+        #creates a user session
+        session.pop('staff', None)
+        session['cust'] = username
+        return redirect('/custHome')
     else:
         #returns an error message to the html page
-        error = 'Invalid login or username'
+        error = 'Invalid username or password.'
         return render_template('customer_login.html', error=error)
 
 #Define route for staff_login
 @app.route('/staffLogin')
 def staff_login():
+    if 'staff' in session:
+        return redirect('/staffHome')
     return render_template('staff_login.html')
 
 #Authenticates the staff_login
@@ -73,15 +75,14 @@ def staff_loginAuth():
     cursor.close()
     error = None
     if(data):
-        #creates a session for the the user
-        #session is a built in
-        session['username'] = username
-        # TODO: Have to change the redirect below
-        return redirect(url_for('home'))
+        #creates a staff session
+        session.pop('cust', None)
+        session['staff'] = username
+        return redirect('/staffHome')
     else:
         #returns an error message to the html page
-        error = 'Invalid login or username'
-        return render_template('customer_login.html', error=error)
+        error = 'Invalid username or password.'
+        return render_template('staff_login.html', error=error)
 
 
 #Define route for customer register
@@ -117,14 +118,14 @@ def customer_registerAuth():
     error = None
     if(data):
         #If the previous query returns data, then user exists
-        error = "This user already exists"
-        return render_template('customer_register.html', error = error)
+        error = "This user already exists."
+        return render_template('customer_register.html', error=error)
     else:
         ins = 'INSERT INTO customer VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
         cursor.execute(ins, (username, name, password, building_num, street, city, state, phone_num, passport_num, passport_exp, passport_country, dob))
         conn.commit()
         cursor.close()
-        return render_template('index.html')
+        return redirect('/')
 
 
 #Define route for staff register
@@ -143,6 +144,15 @@ def staff_registerAuth():
     airline_name = request.form['airline name']
     dob = request.form['DOB']
 
+    #check airline name
+    cursor = conn.cursor()
+    #executes query
+    query = 'SELECT * FROM airline WHERE airline_name = %s'
+    cursor.execute(query, (airline_name))
+    data = cursor.fetchone()
+    if not data:
+        return render_template('staff_register.html', error="Invalid airline name specified.")
+
     #cursor used to send queries
     cursor = conn.cursor()
     #executes query
@@ -154,36 +164,39 @@ def staff_registerAuth():
     error = None
     if(data):
         #If the previous query returns data, then user exists
-        error = "This user already exists"
-        return render_template('staff_register.html', error = error)
+        error = "This staff already exists."
+        return render_template('staff_register.html', error=error)
     else:
         ins = 'INSERT INTO airlinestaff VALUES(%s, %s, %s, %s, %s, %s)'
         cursor.execute(ins, (username, password, fname, lname, dob, airline_name))
         conn.commit()
         cursor.close()
-        return render_template('index.html')
+        return redirect('/')
 
 
-@app.route('/home')
-def home():
-    username = session['username']
-    return render_template('home.html', username=username)
+@app.route('/custHome')
+def custHome():
+    if 'cust' not in session:
+        return redirect('/')
+    username = session['cust']
+    return render_template('home_cust.html', username=username)
+
+@app.route('/staffHome')
+def staffHome():
+    if 'staff' not in session:
+        return redirect('/')
+    username = session['staff']
+    return render_template('home_staff.html', username=username)
 
 @app.route('/logout')
 def logout():
-	session.pop('username')
-	return redirect('/')
-
-"""
-TODO: Figure out what session does 
-and redirect login pages to appropriate pages
-"""
-
+    session.pop('staff', None)
+    session.pop('cust', None)
+    return redirect('/')
 
 app.secret_key = 'some key that you will never guess'
 #Run the app on localhost port 5000
 #debug = True -> you don't have to restart flask
 #for changes to go through, TURN OFF FOR PRODUCTION
 if __name__ == "__main__":
-
-    app.run('127.0.0.1', 5000, debug = True)
+    app.run('127.0.0.1', 5000, debug=True)
