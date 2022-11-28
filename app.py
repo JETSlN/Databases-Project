@@ -119,6 +119,7 @@ def customer_registerAuth():
     if(data):
         #If the previous query returns data, then user exists
         error = "This user already exists."
+        cursor.close()
         return render_template('customer_register.html', error=error)
     else:
         ins = 'INSERT INTO customer VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
@@ -165,6 +166,7 @@ def staff_registerAuth():
     if(data):
         #If the previous query returns data, then user exists
         error = "This staff already exists."
+        cursor.close()
         return render_template('staff_register.html', error=error)
     else:
         ins = 'INSERT INTO airlinestaff VALUES(%s, %s, %s, %s, %s, %s)'
@@ -187,6 +189,79 @@ def staffHome():
         return redirect('/')
     username = session['staff']
     return render_template('home_staff.html', username=username)
+
+@app.route('/addAirport')
+def addAirport():
+    if 'staff' not in session:
+        return redirect('/')
+    return render_template('add_airport.html')
+
+@app.route('/addAirportPost', methods=['GET', 'POST'])
+def addAirportPost():
+    if 'staff' not in session:
+        return redirect('/')
+    #grabs information from the forms
+    name = request.form['name']
+    city = request.form['city']
+    country = request.form['country']
+    type = request.form['type']
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'SELECT * FROM airport WHERE airport_name = %s'
+    cursor.execute(query, (name))
+    data = cursor.fetchone()
+    error = None
+    if(data):
+        error = 'Airport name already exists.'
+        cursor.close()
+        return render_template('add_airport.html', error=error)
+    else:
+        ins = 'INSERT INTO airport VALUES(%s, %s, %s, %s)'
+        cursor.execute(ins, (name, city, country, type))
+        conn.commit()
+        cursor.close()
+        return redirect('/staffHome')
+
+@app.route('/addAirplane')
+def addAirplane():
+    if 'staff' not in session:
+        return redirect('/')
+    return render_template('add_airplane.html')
+
+@app.route('/addAirplanePost', methods=['GET', 'POST'])
+def addAirplanePost():
+    if 'staff' not in session:
+        return redirect('/')
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    staff_data = cursor.fetchone()
+    cursor.close()
+
+    #grabs information from the forms
+    id = request.form['id']
+    num_seats = request.form['num_seats']
+    manu_comp = request.form['manu_comp']
+    age = request.form['age']
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'SELECT * FROM airplane WHERE airline_name = %s and airplane_id = %s'
+    cursor.execute(query, (staff_data['airline_name'], id))
+    data = cursor.fetchone()
+    error = None
+    if(data):
+        error = 'Airplane ID already exists.'
+        cursor.close()
+        return render_template('add_airplane.html', error=error)
+    else:
+        ins = 'INSERT INTO airplane VALUES(%s, %s, %s, %s, %s)'
+        cursor.execute(ins, (staff_data['airline_name'], id, num_seats, manu_comp, age))
+        conn.commit()
+        cursor.close()
+        return redirect('/staffHome')
 
 @app.route('/logout')
 def logout():
