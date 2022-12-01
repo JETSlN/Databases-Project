@@ -68,10 +68,10 @@
 		<td>{{flight['return_number']}}</td>
 		<td>{{flight['return_date']}}</td>
 		{% if loggedincust %}
-		<td><button onclick="myFunction{{loop.index}}()">Purchase Ticket</button></td>
+		<td><button onclick="purchaseTicket{{loop.index}}()">Purchase Ticket</button></td>
 		<script>
-			function myFunction{{loop.index}}() {
-				console.log("Hello, purchasing ticket from " + "{{flight['flight_num']}}");
+			function purchaseTicket{{loop.index}}() {
+				console.log("Purchasing ticket for flight " + "{{flight['flight_num']}}");
 			}
 		</script>
 		{% endif %}
