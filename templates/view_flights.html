@@ -1,0 +1,93 @@
+<html>
+<head>
+</head>
+<body>
+<p>If you know your flight ID you may check the status below:</p>
+<form action="/viewFlightStatusPost" method="POST">
+	<input type="text" name = "airline_name" placeholder="airline name" required/> </br>
+	<input type="text" name = "num" placeholder="flight number" required/> </br>
+	<p>Departure date and time:</p>
+	<input type="date" name = "dept_date" placeholder="departure date" required/> </br>
+	<input type="time" name = "dept_time" placeholder="departure time" required/> </br>
+	<p>Arrival date and time (optional):</p>
+	<input type="date" name = "arr_date" placeholder="arrival date"/> </br>
+	<input type="time" name = "arr_time" placeholder="arrival time"/> </br>
+	<input type="submit" value = "Check Status" />
+	{% if status %}
+		<p><b>{{status}}</b></p>
+	{% endif %}
+</form>
+
+<p>Otherwise, search for future flights below:</p>
+
+<form action="/searchFlightPost" method="POST">
+	<input type="text" name = "src_city" placeholder="source city"/> </br>
+	<input type="text" name = "src_airport" placeholder="source airport"/> </br>
+	<input type="text" name = "dest_city" placeholder="destination city"/> </br>
+	<input type="text" name = "dest_airport" placeholder="destination airport"/> </br>
+	<input type="text" name = "dept_date" placeholder="departure date"/> </br>
+	<input type="text" name = "ret_date" placeholder="return date (if round trip)"/> </br>
+	<input type="submit" value = "Search" />
+	{% if found %}
+		<p><b>{{found}}</b></p>
+	{% endif %}
+</form>
+
+{% if flightdata %}
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+	<th>Airline Name</th>
+	<th>Flight Number</th>
+	<th>Departure Date & Time</th>
+	<th>Arrival Date & Time</th>
+	<th>Base Price</th>
+	<th>Status</th>
+	<th>Departure Airport, City</th>
+	<th>Arrival Airport, City</th>
+	<th>Return Flight Number</th>
+	<th>Return Flight Date & Time</th>
+	{% if loggedincust %}
+	<th>Purchase Ticket</th>
+	{% endif %}
+	
+{% for flight in flightdata %}
+	<tr>
+		<td>{{flight['airline_name']}}</td>
+		<td>{{flight['flight_num']}}</td>
+		<td>{{flight['dept_date']}}</td>
+		<td>{{flight['arr_date']}}</td>
+		<td>{{flight['base_price']}}</td>
+		<td>{{flight['status']}}</td>
+		<td>{{flight['dept']}}</td>
+		<td>{{flight['arri']}}</td>
+		<td>{{flight['return_number']}}</td>
+		<td>{{flight['return_date']}}</td>
+		{% if loggedincust %}
+		<td><button onclick="myFunction{{loop.index}}()">Purchase Ticket</button></td>
+		<script>
+			function myFunction{{loop.index}}() {
+				console.log("Hello, purchasing ticket from " + "{{flight['flight_num']}}");
+			}
+		</script>
+		{% endif %}
+	</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% if not loggedincust %}
+<a href="/">Go back</a>
+{% endif %}
+{% if loggedincust %}
+<a href="/custHome">Go back</a>
+{% endif %}
+
+</body>
+
+
+</html>

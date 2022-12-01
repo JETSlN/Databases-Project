@@ -177,27 +177,27 @@ def staff_registerAuth():
 
 
 @app.route('/custHome')
-def custHome():
+def cust_home():
     if 'cust' not in session:
         return redirect('/')
     username = session['cust']
     return render_template('home_cust.html', username=username)
 
 @app.route('/staffHome')
-def staffHome():
+def staff_home():
     if 'staff' not in session:
         return redirect('/')
     username = session['staff']
     return render_template('home_staff.html', username=username)
 
 @app.route('/addAirport')
-def addAirport():
+def add_airport():
     if 'staff' not in session:
         return redirect('/')
     return render_template('add_airport.html')
 
 @app.route('/addAirportPost', methods=['GET', 'POST'])
-def addAirportPost():
+def add_airportPost():
     if 'staff' not in session:
         return redirect('/')
     #grabs information from the forms
@@ -224,13 +224,13 @@ def addAirportPost():
         return redirect('/staffHome')
 
 @app.route('/addAirplane')
-def addAirplane():
+def add_airplane():
     if 'staff' not in session:
         return redirect('/')
     return render_template('add_airplane.html')
 
 @app.route('/addAirplanePost', methods=['GET', 'POST'])
-def addAirplanePost():
+def add_airplanePost():
     if 'staff' not in session:
         return redirect('/')
     #get airline name
@@ -262,6 +262,93 @@ def addAirplanePost():
         conn.commit()
         cursor.close()
         return redirect('/staffHome')
+
+@app.route('/viewFlights')
+def view_flights():
+    return render_template('view_flights.html', loggedincust='cust' in session)
+
+@app.route('/viewFlightStatusPost', methods=['GET', 'POST'])
+def view_flightStatus():
+    #grabs information from the forms
+    airline_name = request.form['airline_name']
+    num = request.form['num']
+    dept_date = request.form['dept_date']
+    dept_time = request.form['dept_time']
+
+    # May be empty
+    arr_date = request.form['arr_date']
+    arr_time = request.form['arr_time']
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'SELECT status FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+    args = [airline_name, num, dept_date, dept_time]
+    if arr_date != '':
+        query += ' and flight_arrival_date = %s'
+        args.append(arr_date)
+    if arr_time != '':
+        query += ' and flight_arrival_time = %s'
+        args.append(arr_time)
+    cursor.execute(query, tuple(args))
+    data = cursor.fetchone()
+    if data is None:
+        return render_template('view_flights.html', loggedincust='cust' in session, status='Status: Flight not found')
+    else:
+        return render_template('view_flights.html', loggedincust='cust' in session, status='Status: ' + data['status'])
+
+@app.route('/searchFlightPost', methods=['GET', 'POST'])
+def search_flights():
+    #grabs information from the forms as LIKE comparisons
+    src_city = '%' + request.form['src_city'] + '%'
+    src_airport = '%' + request.form['src_airport'] + '%'
+    dest_city = '%' + request.form['dest_city'] + '%'
+    dest_airport = '%' + request.form['dest_airport'] + '%'
+    dept_date = '%' + request.form['dept_date'] + '%'
+    ret_date = '%' + request.form['ret_date'] + '%'
+
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'CREATE VIEW IF NOT EXISTS departure as (SELECT airport_name as dept_airport_name, city as dept_city FROM airport)'
+    cursor.execute(query)
+    query = 'CREATE VIEW IF NOT EXISTS arrival as (SELECT airport_name as arrival_airport_name, city as arri_city FROM airport)'
+    cursor.execute(query)
+    query = 'CREATE VIEW IF NOT EXISTS flight_with_city as (SELECT * FROM flight natural join departure natural join arrival)'
+    cursor.execute(query)
+    query = 'SELECT * FROM flight_with_city WHERE flight_dept_date > CURDATE() and dept_city like %s and dept_airport_name like %s and arri_city like %s and arrival_airport_name like %s and flight_dept_date like %s'
+    args = [src_city, src_airport, dest_city, dest_airport, dept_date]
+    if ret_date != '%%':
+        query += ' and return_flight_date like %s'
+        args.append(ret_date)
+    query += ' ORDER BY flight_dept_date, flight_dept_time'
+    cursor.execute(query, tuple(args))
+    data = cursor.fetchall()
+    if len(data) == 0:
+        return render_template('view_flights.html', loggedincust='cust' in session, found='No flights were found!')
+    else:
+        # Convert into table data
+        flight_data = []
+        for dictionary in data:
+            flight_dict = dict()
+            flight_dict['airline_name'] = dictionary['airline_name']
+            flight_dict['flight_num'] = dictionary['flight_num']
+            flight_dict['dept_date'] = str(dictionary['flight_dept_date']) + ' ' + str(dictionary['flight_dept_time'])
+            flight_dict['arr_date'] = str(dictionary['flight_arrival_date']) + ' ' + str(dictionary['flight_arrival_time'])
+            flight_dict['base_price'] = dictionary['base_price']
+            flight_dict['status'] = dictionary['status']
+            flight_dict['dept'] = dictionary['dept_airport_name'] + ', ' + dictionary['dept_city']
+            flight_dict['arri'] = dictionary['arrival_airport_name'] + ', ' + dictionary['arri_city']
+
+            if dictionary['return_flight_num'] is None:
+                flight_dict['return_number'] = 'N/A'
+            else:
+                flight_dict['return_number'] = dictionary['return_flight_num']
+            if dictionary['return_flight_date'] is None:
+                flight_dict['return_date'] = 'N/A'
+            else:
+                flight_dict['return_date'] = str(dictionary['return_flight_date']) + ' ' + str(dictionary['return_flight_time'])
+            flight_data.append(flight_dict)
+        return render_template('view_flights.html', loggedincust='cust' in session, found=str(len(data)) + ' flights were found', flightdata=flight_data)
 
 @app.route('/logout')
 def logout():
