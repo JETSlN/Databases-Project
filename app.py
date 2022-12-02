@@ -363,6 +363,18 @@ def view_most_freq_customer():
     airline_name = cursor.fetchone() # holds the airline name the staff works for
     cursor.close()
 
+    past_year = '2021-11-01'
+
+    #create a view if it doesn't exist
+    cursor = conn.cursor()
+    query = 'CREATE VIEW IF NOT EXISTS customer_frequency AS ' \
+            'SELECT customer_email as customer, count(customer_email) as frequency, airline_name ' \
+            'from ticket ' \
+            'where purchase_date >= %s ' \
+            'group by customer_email, airline_name'
+    cursor.execute(query, past_year)
+    cursor.close()
+
     #get frequency of most frequent customer for that airline
     cursor = conn.cursor()
     query = 'SELECT max(frequency) from customer_frequency WHERE airline_name = %s'
