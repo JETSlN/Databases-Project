@@ -350,6 +350,141 @@ def search_flights():
             flight_data.append(flight_dict)
         return render_template('view_flights.html', loggedincust='cust' in session, found=str(len(data)) + ' flights were found', flightdata=flight_data)
 
+
+@app.route('/viewmostfreqcust')
+def view_most_freq_customer():
+    if 'staff' not in session:
+        return redirect('/')
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    #get frequency of most frequent customer for that airline
+    cursor = conn.cursor()
+    query = 'SELECT max(frequency) from customer_frequency WHERE airline_name = %s'
+    cursor.execute(query, (airline_name['airline_name']))
+    most_freq = cursor.fetchone() # holds most frequent customer
+    cursor.close()
+
+    #get a list of the most frequent customers
+    cursor = conn.cursor()
+    query = 'SELECT customer, frequency from customer_frequency where frequency = %s'
+    cursor.execute(query, most_freq['max(frequency)'])
+    data = cursor.fetchall() # holds the [most frequent customer, frequency]
+    cursor.close()
+
+    return render_template('view_most_frequent_customer.html', data=data)
+
+@app.route('/view_part_customer')
+def view_particular_customer():
+    if 'staff' not in session:
+        return redirect('/')
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    #get list of customer for that airline
+    cursor = conn.cursor()
+    query = 'SELECT customer_email from ticket where airline_name = %s'
+    cursor.execute(query, airline_name['airline_name'])
+    data = cursor.fetchall() # holds a list of customers for that airline
+    cursor.close()
+
+
+    return render_template('view_particular_customer.html', data=data)
+
+@app.route('/view_particular_customer_post', methods = ['GET', 'POST'])
+def view_particular_customer_post():
+    if 'staff' not in session:
+        return redirect('/')
+    customer = request.form['customer']
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    #get all flights of that customer
+    cursor = conn.cursor()
+    query = 'SELECT * from flight, ticket where flight.flight_num = ticket.flight_num ' \
+            'and customer_email = %s and flight.airline_name = %s and flight.airline_name = ticket.airline_name;'
+    cursor.execute(query, (customer, (airline_name['airline_name'])))
+    data = cursor.fetchall() # holds the airline name the staff works for
+    cursor.close()
+
+    return render_template("view_particular_customer_post.html", customer=customer, data=data)
+
+@app.route('/view_earned_reports')
+def view_earned_reports():
+    if 'staff' not in session:
+        return redirect('/')
+    return render_template("view_earned_reports.html")
+
+@app.route('/view_earned_reportsPost', methods = ['GET', 'POST'])
+def view_earned_reports_post():
+    if 'staff' not in session:
+        return redirect('/')
+    start_date = request.form['Start Date']
+    end_date = request.form['End Date']
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    #get total amount of tickets sold by that airline
+    cursor = conn.cursor()
+    query = 'SELECT airline_name, count(airline_name) as amount from ticket where ' \
+            'purchase_date BETWEEN %s and %s and airline_name=%s and customer_email IS NOT NULL;'
+    cursor.execute(query, (start_date, end_date, airline_name['airline_name']))
+    data = cursor.fetchone() # holds the total amount of tickets sold by the airline
+    cursor.close()
+
+    return render_template("view_earned_reports_posts.html", data=data, start_date=start_date, end_date=end_date)
+
+@app.route('/view_earned_revenue')
+def view_earned_revenue():
+    if 'staff' not in session:
+        return redirect('/')
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+    past_month = '2022-11-01'
+    past_year = '2021-11-01'
+
+    #get Earned revenue in last month
+    cursor = conn.cursor()
+    query = 'select sum(sold_price) as total from ticket where airline_name = %s and purchase_date >= %s'
+    cursor.execute(query, (airline_name['airline_name'], past_month))
+    past_monthRev = cursor.fetchone() # holds the revenue for past month
+    cursor.close()
+
+    # get earned revenue for past year
+    cursor = conn.cursor()
+    query = 'select sum(sold_price) as total from ticket where airline_name = %s and purchase_date >= %s'
+    cursor.execute(query, (airline_name['airline_name'], past_year))
+    past_yearRev = cursor.fetchone() # holds the revenue for past year
+    cursor.close()
+
+    return render_template("view_earned_revenue.html", past_monthRev=past_monthRev, past_yearRev=past_yearRev)
+
+
 @app.route('/logout')
 def logout():
     session.pop('staff', None)

@@ -1,0 +1,55 @@
+<br>
+<head>
+</head>
+
+<text>List of past flight for {{customer}} </text> </br>
+
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+	<th>Airline Name</th>
+    <th>Flight Num</th>
+	<th>Flight Dept Date</th>
+	<th>Flight Dept Time</th>
+	<th>Flight Arrival Date</th>
+	<th>Flight Arrival Time</th>
+	<th>Base Price</th>
+	<th>Status</th>
+	<th>Dept Airport Name</th>
+	<th>Arrival Airport Name</th>
+	<th>Airplane ID</th>
+	<th>Return flight Num</th>
+	<th>Return flight Date</th>
+	<th>Return flight Time</th>
+
+{% for line in data %}
+    <tr>
+        <td>{{line['airline_name']}}</td>
+        <td>{{line['flight_num']}}</td>
+        <td>{{line['flight_dept_date']}}</td>
+        <td>{{line['flight_dept_time']}}</td>
+        <td>{{line['flight_arrival_date']}}</td>
+        <td>{{line['flight_arrival_time']}}</td>
+        <td>{{line['base_price']}}</td>
+        <td>{{line['status']}}</td>
+        <td>{{line['dept_airport_name']}}</td>
+        <td>{{line['arrival_airport_name']}}</td>
+        <td>{{line['airplane_id']}}</td>
+        <td>{{line['return_flight_num']}}</td>
+        <td>{{line['return_flight_date']}}</td>
+        <td>{{line['return_flight_time']}}</td>
+    </tr>
+{% endfor %}
+</table>
+ </br> </br> </br>
+
+
+</body>
+
+<a href="/view_part_customer">Go back</a>
+
+</html>

@@ -1,0 +1,37 @@
+<html>
+<head>
+</head>
+
+<text>Below is a list of all your customers: </text> </br>
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+	<th>Customer</th>
+
+{% for line in data %}
+    {% if line['customer_email'] is none %}
+    {% else %}
+	    <tr>
+		    <td>{{line['customer_email']}}</td>
+	    </tr>
+    {% endif %}
+{% endfor %}
+</table>
+ </br> </br> </br>
+
+<text>Type the name of the customer you would like to see: </text>
+<form action="/view_particular_customer_post" method="POST">
+	<input type="text" name = "customer" placeholder="Customer Email" required/> </br>
+    <input type="submit" value="Go" />
+</form>
+
+<a href="/staffHome">Go back</a>
+
+</body>
+
+
+</html>

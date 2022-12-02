@@ -1,0 +1,30 @@
+<html>
+<head>
+</head>
+<text>Below is a list of the most frequent customers within the past year: </text> </br>
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+	<th>Customer</th>
+	<th>Frequency</th>
+
+{% for line in data %}
+	<tr>
+		<td>{{line['customer']}}</td>
+		<td>{{line['frequency']}}</td>
+	</tr>
+{% endfor %}
+</table>
+ </br> </br> </br>
+
+
+<a href="/staffHome">Go back</a>
+
+</body>
+
+
+</html>
