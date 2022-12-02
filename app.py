@@ -363,16 +363,14 @@ def view_most_freq_customer():
     airline_name = cursor.fetchone() # holds the airline name the staff works for
     cursor.close()
 
-    past_year = '2021-11-01'
-
-    #create a view if it doesn't exist
+    #create or replace a view
     cursor = conn.cursor()
-    query = 'CREATE VIEW IF NOT EXISTS customer_frequency AS ' \
+    query = 'CREATE OR REPLACE VIEW customer_frequency AS ' \
             'SELECT customer_email as customer, count(customer_email) as frequency, airline_name ' \
             'from ticket ' \
-            'where purchase_date >= %s ' \
-            'group by customer_email, airline_name'
-    cursor.execute(query, past_year)
+            'where purchase_date BETWEEN (CURDATE() - INTERVAL 12 month) and (CURDATE())' \
+            'group by customer_email, airline_name;'
+    cursor.execute(query)
     cursor.close()
 
     #get frequency of most frequent customer for that airline
@@ -389,7 +387,7 @@ def view_most_freq_customer():
     data = cursor.fetchall() # holds the [most frequent customer, frequency]
     cursor.close()
 
-    return render_template('view_most_frequent_customer.html', data=data)
+    return render_template('view_most_frequent_customer.html', data=data, airline_name=airline_name)
 
 @app.route('/view_part_customer')
 def view_particular_customer():
@@ -477,25 +475,24 @@ def view_earned_revenue():
     cursor.execute(query, (session['staff']))
     airline_name = cursor.fetchone() # holds the airline name the staff works for
     cursor.close()
-    past_month = '2022-11-01'
-    past_year = '2021-11-01'
 
     #get Earned revenue in last month
     cursor = conn.cursor()
-    query = 'select sum(sold_price) as total from ticket where airline_name = %s and purchase_date >= %s'
-    cursor.execute(query, (airline_name['airline_name'], past_month))
+    query = 'select sum(sold_price) as total from ticket ' \
+            'where airline_name = %s and purchase_date BETWEEN (CURDATE() - INTERVAL 1 month) and (CURDATE())'
+    cursor.execute(query, (airline_name['airline_name']))
     past_monthRev = cursor.fetchone() # holds the revenue for past month
     cursor.close()
 
     # get earned revenue for past year
     cursor = conn.cursor()
-    query = 'select sum(sold_price) as total from ticket where airline_name = %s and purchase_date >= %s'
-    cursor.execute(query, (airline_name['airline_name'], past_year))
+    query = 'select sum(sold_price) as total from ticket ' \
+            'where airline_name = %s and purchase_date BETWEEN (CURDATE() - INTERVAL 12 month) and (CURDATE())'
+    cursor.execute(query, (airline_name['airline_name']))
     past_yearRev = cursor.fetchone() # holds the revenue for past year
     cursor.close()
 
     return render_template("view_earned_revenue.html", past_monthRev=past_monthRev, past_yearRev=past_yearRev)
-
 
 @app.route('/logout')
 def logout():
