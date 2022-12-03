@@ -332,7 +332,8 @@ def search_flights():
             flight_dict = dict()
             flight_dict['airline_name'] = dictionary['airline_name']
             flight_dict['flight_num'] = dictionary['flight_num']
-            flight_dict['dept_date'] = str(dictionary['flight_dept_date']) + ' ' + str(dictionary['flight_dept_time'])
+            flight_dict['dept_date'] = str(dictionary['flight_dept_date'])
+            flight_dict['dept_time'] = str(dictionary['flight_dept_time'])
             flight_dict['arr_date'] = str(dictionary['flight_arrival_date']) + ' ' + str(dictionary['flight_arrival_time'])
             flight_dict['base_price'] = dictionary['base_price']
             flight_dict['status'] = dictionary['status']
@@ -349,6 +350,28 @@ def search_flights():
                 flight_dict['return_date'] = str(dictionary['return_flight_date']) + ' ' + str(dictionary['return_flight_time'])
             flight_data.append(flight_dict)
         return render_template('view_flights.html', loggedincust='cust' in session, found=str(len(data)) + ' flights were found', flightdata=flight_data)
+
+@app.route('/purchaseTicket')
+def purchaseTicketForm():
+    if 'cust' not in session:
+        return redirect('/')
+    airline_name = request.args['airline_name']
+    flight_num = request.args['flight_num']
+    dept_date = request.args['dept_date']
+    dept_time = request.args['dept_time']
+
+    # check flight existance
+    cursor = conn.cursor()
+    query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+    cursor.execute(query, (airline_name, flight_num, dept_date, dept_time))
+    data = cursor.fetchall()
+    if not data:
+        return render_template('purchase_ticket.html', badflight='The flight you selected was not found.')
+
+    # TODO check if flight is full
+    # TODO check if flight is 60% full
+    # TODO form
+    return render_template('purchase_ticket.html', badflight=False)
 
 
 @app.route('/viewmostfreqcust')
