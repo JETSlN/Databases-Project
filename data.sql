@@ -30,9 +30,6 @@ INSERT INTO flight VALUES('Jet Blue', 'J2', '2022-12-23', '09:30:00', '2022-12-2
 INSERT INTO flight VALUES('Jet Blue', 'J3', '2022-12-25', '09:30:00', '2022-12-26', '1:30:00', '100', 'Delayed', 'JFK', 'PVG', '1001', NULL, NULL, NULL);
 
 -- g
-INSERT INTO ticket VALUES('J2-0', 'J2', '2022-12-23', '09:30:00', 'Jet Blue', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO ticket VALUES('J2-1', 'J2', '2022-12-23', '09:30:00', 'Jet Blue', 'mahmoud@airlinecustomer.com', 150, 'Credit', '000000', 'DUMMY', '2023-12-31', '2022-11-4', '09:30:00');
 INSERT INTO ticket VALUES('J2-2', 'J2', '2022-12-23', '09:30:00', 'Jet Blue', 'jeff@airlinecustomer.com', 150, 'Credit', '000000', 'DUMMY', '2023-12-31', '2022-11-2', '09:30:00');
 INSERT INTO ticket VALUES('J2-3', 'J2', '2022-12-23', '09:30:00', 'Jet Blue', 'kenny@airlinecustomer.com', 150, 'Credit', '000000', 'DUMMY', '2023-12-31', '2022-10-31', '09:30:00');
-INSERT INTO ticket VALUES('P2-0', 'P2', '2022-12-24', '09:30:00', 'Jet Blue', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO ticket VALUES('P2-1', 'P2', '2022-12-24', '09:30:00', 'Jet Blue', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);

@@ -1,5 +1,6 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect
+from datetime import date, timedelta
 import pymysql.cursors
 import hashlib
 
@@ -291,6 +292,7 @@ def view_flight_status():
         args.append(arr_time)
     cursor.execute(query, tuple(args))
     data = cursor.fetchone()
+    cursor.close()
     if data is None:
         return render_template('view_future_flights.html', loggedincust='cust' in session, status='Status: Flight not found')
     else:
@@ -323,6 +325,7 @@ def search_future_flights():
     query += ' ORDER BY flight_dept_date, flight_dept_time'
     cursor.execute(query, tuple(args))
     data = cursor.fetchall()
+    cursor.close()
     if len(data) == 0:
         return render_template('view_future_flights.html', loggedincust='cust' in session, found='No flights were found!')
     else:
@@ -351,6 +354,115 @@ def search_future_flights():
             flight_data.append(flight_dict)
         return render_template('view_future_flights.html', loggedincust='cust' in session, found=str(len(data)) + ' flights were found', flightdata=flight_data)
 
+@app.route('/viewAirlineFlights')
+def view_airline_flights():
+    if 'staff' not in session:
+        return redirect('/')
+    message = "Search for your airline's flights below:"
+    start_date = date.today()
+    end_date = date.today() + timedelta(days=30)
+    return render_template('view_all_flights.html', staff=True, message=message, startdate=start_date, enddate=end_date)
+
+@app.route('/viewMyFlights')
+def view_cust_flights():
+    if 'cust' not in session:
+        return redirect('/')
+    message = "Search for your purchased tickets below:"
+    start_date = date.today()
+    end_date = ''
+    return render_template('view_all_flights.html', staff=False, message=message, startdate=start_date, enddate=end_date)
+
+@app.route('/searchFlightsPost', methods=['GET', 'POST'])
+def search_flights():
+    is_staff = 'staff' in session
+    if not is_staff and 'cust' not in session:
+        return redirect('/')
+
+    if is_staff:
+        message = "Search for your airline's flights below:"
+    else:
+        message = "Search for your purchased tickets below:"
+
+    #grabs information from the forms as LIKE comparisons (except for the date range)
+    src_city = '%' + request.form['src_city'] + '%'
+    src_airport = '%' + request.form['src_airport'] + '%'
+    dest_city = '%' + request.form['dest_city'] + '%'
+    dest_airport = '%' + request.form['dest_airport'] + '%'
+    dept_date_start = request.form['dept_date_start']
+    dept_date_end = request.form['dept_date_end']
+
+    #cursor used to send queries
+    cursor = conn.cursor()
+
+    staff_data = None
+    if is_staff:
+        query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+        cursor.execute(query, (session['staff']))
+        staff_data = cursor.fetchone()
+
+    #executes query
+    query = 'CREATE VIEW IF NOT EXISTS departure as (SELECT airport_name as dept_airport_name, city as dept_city FROM airport)'
+    cursor.execute(query)
+    query = 'CREATE VIEW IF NOT EXISTS arrival as (SELECT airport_name as arrival_airport_name, city as arri_city FROM airport)'
+    cursor.execute(query)
+    query = 'CREATE VIEW IF NOT EXISTS flight_with_city as (SELECT * FROM flight natural join departure natural join arrival)'
+    cursor.execute(query)
+
+    if is_staff:
+        # Must only select from staff's airline
+        query = 'SELECT * FROM flight_with_city WHERE airline_name = %s and dept_city like %s and dept_airport_name like %s and arri_city like %s and arrival_airport_name like %s'
+        args = [staff_data['airline_name'], src_city, src_airport, dest_city, dest_airport]
+    else:
+        # Select flights that the user purchased
+        query = 'SELECT * FROM flight_with_city natural join ticket WHERE customer_email = %s and dept_city like %s and dept_airport_name like %s and arri_city like %s and arrival_airport_name like %s'
+        args = [session['cust'], src_city, src_airport, dest_city, dest_airport]
+    if dept_date_start:
+        query += ' and flight_dept_date >= %s'
+        args.append(dept_date_start)
+    if dept_date_end:
+        query += ' and flight_dept_date <= %s'
+        args.append(dept_date_end)
+
+    query += ' ORDER BY flight_dept_date, flight_dept_time'
+    cursor.execute(query, tuple(args))
+    data = cursor.fetchall()
+    if len(data) == 0:
+        return render_template('view_all_flights.html', staff=is_staff, found='No flights were found!', message=message)
+    else:
+        # Convert into table data
+        flight_data = []
+        for dictionary in data:
+            flight_dict = dict()
+            flight_dict['airline_name'] = dictionary['airline_name']
+            flight_dict['flight_num'] = dictionary['flight_num']
+            flight_dict['dept_date'] = str(dictionary['flight_dept_date'])
+            flight_dict['dept_time'] = str(dictionary['flight_dept_time'])
+            flight_dict['arr_date'] = str(dictionary['flight_arrival_date']) + ' ' + str(dictionary['flight_arrival_time'])
+            flight_dict['base_price'] = dictionary['base_price']
+            flight_dict['status'] = dictionary['status']
+            flight_dict['dept'] = dictionary['dept_airport_name'] + ', ' + dictionary['dept_city']
+            flight_dict['arri'] = dictionary['arrival_airport_name'] + ', ' + dictionary['arri_city']
+
+            if not is_staff:
+                flight_dict['ticket_id'] = dictionary['ticket_id']
+                flight_dict['paid_price'] = dictionary['sold_price']
+                flight_dict['purchase_date'] = str(dictionary['purchase_date']) + ' ' + str(dictionary['purchase_time'])
+
+            if dictionary['return_flight_num'] is None:
+                flight_dict['return_number'] = 'N/A'
+            else:
+                flight_dict['return_number'] = dictionary['return_flight_num']
+            if dictionary['return_flight_date'] is None:
+                flight_dict['return_date'] = 'N/A'
+            else:
+                flight_dict['return_date'] = str(dictionary['return_flight_date']) + ' ' + str(dictionary['return_flight_time'])
+            flight_data.append(flight_dict)
+        if is_staff:
+            found = str(len(data)) + ' flights were found'
+        else:
+            found = str(len(data)) + ' tickets were found'
+        return render_template('view_all_flights.html', staff=is_staff, found=found, flightdata=flight_data, message=message)
+
 @app.route('/purchaseTicket')
 def purchaseTicketForm():
     if 'cust' not in session:
@@ -365,6 +477,7 @@ def purchaseTicketForm():
     query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
     cursor.execute(query, (airline_name, flight_num, dept_date, dept_time))
     data = cursor.fetchall()
+    cursor.close()
     if not data:
         return render_template('purchase_ticket.html', badflight='The flight you selected was not found.')
 
