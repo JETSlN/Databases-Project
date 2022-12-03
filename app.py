@@ -263,12 +263,12 @@ def add_airplanePost():
         cursor.close()
         return redirect('/staffHome')
 
-@app.route('/viewFlights')
-def view_flights():
-    return render_template('view_flights.html', loggedincust='cust' in session)
+@app.route('/viewFutureFlights')
+def view_future_flights():
+    return render_template('view_future_flights.html', loggedincust='cust' in session)
 
 @app.route('/viewFlightStatusPost', methods=['GET', 'POST'])
-def view_flightStatus():
+def view_flight_status():
     #grabs information from the forms
     airline_name = request.form['airline_name']
     num = request.form['num']
@@ -292,12 +292,12 @@ def view_flightStatus():
     cursor.execute(query, tuple(args))
     data = cursor.fetchone()
     if data is None:
-        return render_template('view_flights.html', loggedincust='cust' in session, status='Status: Flight not found')
+        return render_template('view_future_flights.html', loggedincust='cust' in session, status='Status: Flight not found')
     else:
-        return render_template('view_flights.html', loggedincust='cust' in session, status='Status: ' + data['status'])
+        return render_template('view_future_flights.html', loggedincust='cust' in session, status='Status: ' + data['status'])
 
-@app.route('/searchFlightPost', methods=['GET', 'POST'])
-def search_flights():
+@app.route('/searchFutureFlightsPost', methods=['GET', 'POST'])
+def search_future_flights():
     #grabs information from the forms as LIKE comparisons
     src_city = '%' + request.form['src_city'] + '%'
     src_airport = '%' + request.form['src_airport'] + '%'
@@ -324,7 +324,7 @@ def search_flights():
     cursor.execute(query, tuple(args))
     data = cursor.fetchall()
     if len(data) == 0:
-        return render_template('view_flights.html', loggedincust='cust' in session, found='No flights were found!')
+        return render_template('view_future_flights.html', loggedincust='cust' in session, found='No flights were found!')
     else:
         # Convert into table data
         flight_data = []
@@ -349,7 +349,7 @@ def search_flights():
             else:
                 flight_dict['return_date'] = str(dictionary['return_flight_date']) + ' ' + str(dictionary['return_flight_time'])
             flight_data.append(flight_dict)
-        return render_template('view_flights.html', loggedincust='cust' in session, found=str(len(data)) + ' flights were found', flightdata=flight_data)
+        return render_template('view_future_flights.html', loggedincust='cust' in session, found=str(len(data)) + ' flights were found', flightdata=flight_data)
 
 @app.route('/purchaseTicket')
 def purchaseTicketForm():
