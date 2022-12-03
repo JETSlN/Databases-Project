@@ -534,7 +534,7 @@ def view_customers():
     # check flight existance
     cursor = conn.cursor()
     query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
-    cursor.execute(query, (airline_name, flight_num, dept_date, dept_time))
+    cursor.execute(query, (airline_name['airline_name'], flight_num, dept_date, dept_time))
     data = cursor.fetchall()
     cursor.close()
     if not data:
