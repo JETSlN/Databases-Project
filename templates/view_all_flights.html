@@ -1,0 +1,85 @@
+<html>
+<head>
+</head>
+<body>
+
+<p>{{message}}</p>
+
+<form action="/searchFlightsPost" method="POST">
+	<input type="text" name = "src_city" placeholder="source city"/> </br>
+	<input type="text" name = "src_airport" placeholder="source airport"/> </br>
+	<input type="text" name = "dest_city" placeholder="destination city"/> </br>
+	<input type="text" name = "dest_airport" placeholder="destination airport"/> </br>
+	<p>The start date (departure) to search:</p>
+	<input type="date" name = "dept_date_start" placeholder="departure date start" value="{{startdate}}"/> </br>
+	<p>The end date (departure) to search:</p>
+	<input type="date" name = "dept_date_end" placeholder="departure date end" value="{{enddate}}"/> </br>
+	<input type="submit" value = "Search" />
+	{% if found %}
+		<p><b>{{found}}</b></p>
+	{% endif %}
+</form>
+
+{% if flightdata %}
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+	<th>Airline Name</th>
+	<th>Flight Number</th>
+	<th>Departure Date & Time</th>
+	<th>Arrival Date & Time</th>
+	{% if not staff %}
+	<th>Ticket ID</th>
+	{% endif %}
+	<th>Base Price</th>
+	{% if not staff %}
+	<th>Paid Price</th>
+	{% endif %}
+	<th>Status</th>
+	<th>Departure Airport, City</th>
+	<th>Arrival Airport, City</th>
+	<th>Return Flight Number</th>
+	<th>Return Flight Date & Time</th>
+	{% if not staff %}
+	<th>Purchase Date</th>
+	{% endif %}
+	
+{% for flight in flightdata %}
+	<tr>
+		<td>{{flight['airline_name']}}</td>
+		<td>{{flight['flight_num']}}</td>
+		<td>{{flight['dept_date']}} {{flight['dept_time']}}</td>
+		<td>{{flight['arr_date']}}</td>
+		{% if not staff %}
+		<td>{{flight['ticket_id']}}</td>
+		{% endif %}
+		<td>{{flight['base_price']}}</td>
+		{% if not staff %}
+		<td>{{flight['paid_price']}}</td>
+		{% endif %}
+		<td>{{flight['status']}}</td>
+		<td>{{flight['dept']}}</td>
+		<td>{{flight['arri']}}</td>
+		<td>{{flight['return_number']}}</td>
+		<td>{{flight['return_date']}}</td>
+		{% if not staff %}
+		<td>{{flight['purchase_date']}}</td>
+		{% endif %}
+	</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% if not staff %}
+<a href="/custHome">Go back</a>
+{% endif %}
+{% if staff %}
+<a href="/staffHome">Go back</a>
+{% endif %}
+
+</body>
+</html>
