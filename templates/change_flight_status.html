@@ -1,0 +1,54 @@
+<html>
+<head>
+</head>
+<text>Below is a list of all flights operated by {{ airline_name['airline_name'] }}: </text> </br>
+
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+	<th>Flight num</th>
+	<th>Flight Dept Date</th>
+    <th>Flight Dept time</th>
+    <th>Status</th>
+
+{% for line in data1 %}
+	<tr>
+		<td>{{line['flight_num']}}</td>
+		<td>{{line['flight_dept_date']}}</td>
+        <td>{{line['flight_dept_time']}}</td>
+        <td>{{line['status']}}</td>
+	</tr>
+{% endfor %}
+</table>
+ </br> </br> </br>
+
+<text>Please provide the information for the flight you would like to change the status for: </text>
+
+<form action="/change_flight_status_post" method="POST">
+	<input type="text" name = "flight num" placeholder="Flight number" required/> </br>
+    <text>Select Flight Departure Date: </text>
+	<input type="date" name = "flight date" required/></br>
+    <text>Select Flight Departure time: </text>
+    <input type="time" name = "flight time" step="2" required/></br></br>
+    <text>Please select the new status of flight: </text></br>
+    <input type="radio" name="status" value="On Time"> On Time </br>
+    <input type="radio" name="status" value="Delayed"> Delayed </br>
+    <input type="radio" name="status" value="Canceled"> Canceled </br>
+	<input type="submit" value = submit />
+    {% if error %}
+		<p class="error"><strong>Error:</strong> {{error}}</p>
+	{% endif %}
+
+</form>
+
+
+<a href="/staffHome">Go back</a>
+
+</body>
+
+
+</html>

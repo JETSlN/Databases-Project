@@ -684,6 +684,81 @@ def view_earned_revenue():
 
     return render_template("view_earned_revenue.html", past_monthRev=past_monthRev, past_yearRev=past_yearRev)
 
+@app.route('/change_flight_status')
+def change_flight_status():
+    if 'staff' not in session:
+        return redirect('/')
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    #get all flights operated by the airline
+    cursor = conn.cursor()
+    query = 'SELECT flight_num, flight_dept_date, flight_dept_time, status ' \
+            'from flight ' \
+            'where airline_name = %s'
+    cursor.execute(query, airline_name['airline_name'])
+    data1 = cursor.fetchall() # holds a list of all the flights operated by the airline
+    cursor.close()
+
+    return render_template('change_flight_status.html', airline_name=airline_name, data1=data1)
+
+@app.route('/change_flight_status_post', methods=['GET', 'POST'])
+def change_flight_status_post():
+    if 'staff' not in session:
+        return redirect('/')
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    #get all flights operated by the airline
+    cursor = conn.cursor()
+    query = 'SELECT flight_num, flight_dept_date, flight_dept_time, status ' \
+            'from flight ' \
+            'where airline_name = %s'
+    cursor.execute(query, airline_name['airline_name'])
+    data1 = cursor.fetchall() # holds a list of all the flights operated by the airline
+    cursor.close()
+
+    flight_num = request.form['flight num']
+    flight_dept_date = request.form['flight date']
+    flight_dept_time = request.form['flight time']
+    status = request.form['status']
+
+    #check if flight exists in the table
+    cursor = conn.cursor()
+    query = 'SELECT airline_name, flight_num, flight_dept_date, flight_dept_time ' \
+            'from flight ' \
+            'where airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+    cursor.execute(query, (airline_name['airline_name'], flight_num, flight_dept_date, flight_dept_time))
+    data = cursor.fetchone() # holds the flight specified
+    cursor.close()
+    error = None
+
+    if not data:
+        #If the previous query doesn't return data, then the flight doesn't exist
+        error = "This Flight doesn't exist, please make sure to input the correct information for the flight you would like to change the status for"
+        return render_template('change_flight_status.html', error=error, airline_name=airline_name, data1=data1)
+    else:
+        cursor = conn.cursor()
+        query = 'UPDATE flight ' \
+                'set status = %s ' \
+                'where airline_name = %s and flight_num = %s' \
+                                               'and flight_dept_date = %s and flight_dept_time = %s'
+        cursor.execute(query, (status, airline_name['airline_name'], flight_num, flight_dept_date, flight_dept_time))
+        conn.commit()
+        cursor.close()
+        return redirect('/change_flight_status')
+
+
 @app.route('/logout')
 def logout():
     session.pop('staff', None)
