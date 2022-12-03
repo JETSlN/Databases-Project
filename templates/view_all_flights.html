@@ -46,6 +46,11 @@
 	<th>Return Flight Date & Time</th>
 	{% if not staff %}
 	<th>Purchase Date</th>
+	<th>Cancel Trip</th>
+	{% endif %}
+	{% if staff %}
+	<th>Customers</th>
+	<th>Ratings</th>
 	{% endif %}
 	
 {% for flight in flightdata %}
@@ -68,6 +73,11 @@
 		<td>{{flight['return_date']}}</td>
 		{% if not staff %}
 		<td>{{flight['purchase_date']}}</td>
+		<td><button onclick="location.href = '/cancelTrip?ticket_id={{flight['ticket_id']}}';">Cancel</button></td>
+		{% endif %}
+		{% if staff %}
+		<td><button onclick="location.href = '/viewCustomers?flight_num={{flight['flight_num']}}&dept_date={{flight['dept_date']}}&dept_time={{flight['dept_time']}}';">View</button></td>
+		<td><button onclick="location.href = '/viewRatings?flight_num={{flight['flight_num']}}&dept_date={{flight['dept_date']}}&dept_time={{flight['dept_time']}}';">View</button></td>
 		{% endif %}
 	</tr>
 {% endfor %}

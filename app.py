@@ -1,6 +1,6 @@
 #Import Flask Library
-from flask import Flask, render_template, request, session, url_for, redirect
-from datetime import date, timedelta
+from flask import Flask, render_template, request, session, redirect
+from datetime import date, timedelta, datetime
 import pymysql.cursors
 import hashlib
 
@@ -486,6 +486,60 @@ def purchaseTicketForm():
     # TODO form
     return render_template('purchase_ticket.html', badflight=False)
 
+@app.route('/cancelTrip')
+def cancel_trip():
+    if 'cust' not in session:
+        return redirect('/')
+    ticket_id = request.args['ticket_id']
+
+    # check ticket existance
+    cursor = conn.cursor()
+    query = 'SELECT * FROM ticket WHERE ticket_id = %s and customer_email = %s'
+    cursor.execute(query, (ticket_id, session['cust']))
+    data = cursor.fetchone()
+    cursor.close()
+    if not data:
+        return render_template('cancel_trip.html', error="Error: The ticket you selected was not found.")
+
+    # check if flight is at lesat 24 hours from today
+    flight_time = datetime.combine(data['flight_dept_date'], datetime.min.time()) + data['flight_dept_time']
+    time_diff = flight_time - datetime.now()
+    if time_diff < timedelta(hours=24):
+        return render_template('cancel_trip.html', error="Error: The flight you selected is not at least 24 hours from today.")
+
+    # cancel trip
+    cursor = conn.cursor()
+    query = 'DELETE FROM ticket WHERE ticket_id = %s and customer_email = %s'
+    cursor.execute(query, (ticket_id, session['cust']))
+    cursor.close()
+
+    success = 'Successfully cancelled ticket {} from flight {} with departure time {} {}.'.format(ticket_id, data['flight_num'], data['flight_dept_date'], data['flight_dept_time'])
+    return render_template('cancel_trip.html', success=success)
+
+@app.route('/viewCustomers')
+def view_customers():
+    if 'staff' not in session:
+        return redirect('/')
+    flight_num = request.args['flight_num']
+    dept_date = request.args['dept_date']
+    dept_time = request.args['dept_time']
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    # check flight existance
+    cursor = conn.cursor()
+    query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+    cursor.execute(query, (airline_name, flight_num, dept_date, dept_time))
+    data = cursor.fetchall()
+    cursor.close()
+    if not data:
+        pass # TODO error message
+    # TODO print results
 
 @app.route('/viewmostfreqcust')
 def view_most_freq_customer():
