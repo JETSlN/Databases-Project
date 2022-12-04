@@ -1,0 +1,58 @@
+<html>
+<head>
+</head>
+<body>
+<form action="/addFlightPost" method="POST">
+	<input type="text" name = "airline_name" placeholder="Airline Name" required/></br>
+	<input type="text" name = "flight_num" placeholder="Flight Number" required/> </br>
+
+    <text>Departure Date </text>
+	<input type="date" name = "flight_dept_date" required/> </br>
+    <text>Departure Time </text>
+	<input type="time" name = "flight_dept_time" required/> </br>
+
+    <text>Arrival Date </text>
+	<input type="date" name = "flight_arrival_date" required/> </br>
+    <text>Arrival Time </text>
+	<input type="time" name = "flight_arrival_time" required/> </br>
+
+    <input type="text" name="base_price" placeholder="Price" required>
+
+    <text> Status</text> </br>
+	<input type="radio" id="On Time" name="status" value="On Time" required/>
+		<label for="On Time">On Time</label><br>
+	<input type="radio" id="Delayed" name="status" value="Delayed">
+		<label for="Delayed">Delayed</label><br>
+	<input type="radio" id="Cancelled" name="status" value="Cancelled">
+		<label for="Cancelled">Cancelled</label><br>
+
+    <input type="text" name="dept_airport_name" placeholder="Departure Airport Name" required></br>
+    <input type="text" name="arrival_airport_name" placeholder="Arrival Airport Name" required></br>
+
+    <input type="text" name="airplane_id" placeholder="Airplane ID" required></br>
+
+    <input type="text" name = "return_flight_num" placeholder="Return Flight Number"/> </br>
+
+
+    <text>Return Departure Date </text>
+	<input type="date" name = "return_dept_date"/> </br>
+    <text>Return Departure Time </text>
+	<input type="time" name = "return_dept_time"/> </br>
+
+    <text>Return Arrival Date </text>
+	<input type="date" name = "return_arrival_date"/> </br>
+    <text>Return Arrival Time </text>
+	<input type="time" name = "return_arrival_time"/> </br>
+
+	<input type="submit" value = "Add Flight" />
+	{% if error %}
+		<p class="error"><strong>Error:</strong> {{error}}</p>
+	{% endif %}
+</form>
+
+<a href="/staffHome">Go back</a>
+
+</body>
+
+
+</html>
