@@ -78,6 +78,7 @@ def staff_loginAuth():
     if(data):
         #creates a staff session
         session.pop('cust', None)
+        session.pop('cust_ticket', None)
         session['staff'] = username
         return redirect('/staffHome')
     else:
@@ -470,13 +471,10 @@ def purchaseTicketForm():
     if 'cust' not in session:
         return redirect('/')
 
-    print(request.args)
-
     airline_name = request.args['airline_name']
     flight_num = request.args['flight_num']
     dept_date = request.args['dept_date']
     dept_time = request.args['dept_time']
-    base_price = request.args['base_price']
     # check flight existence
     cursor = conn.cursor()
     query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
@@ -510,6 +508,8 @@ def purchaseTicketForm():
 
 @app.route('/purchaseTicketPost', methods=["GET", "POST"])
 def purchaseTicketFormPost():
+    if 'cust' not in session or 'cust_ticket' not in session:
+        return redirect('/')
     airline_name = session['cust_ticket']["airline_name"]
     flight_num = session['cust_ticket']["flight_num"]
     dept_date = session['cust_ticket']["dept_date"]
@@ -527,7 +527,6 @@ def purchaseTicketFormPost():
     cursor.execute(query, flight_num)
     data = cursor.fetchone()
     cursor.close()
-    print(data)
     if data:
         max_num = flight_num+"-"+str(int(data['l']) + 1)
     else:
@@ -593,8 +592,7 @@ def view_customers():
     data = cursor.fetchall()
     cursor.close()
     if not data:
-        pass # TODO error message
-    # TODO print results: DONE
+        return render_template("view_flights_customers.html", message="The flight you selected does not exist")
     message = None
     cursor = conn.cursor()
     query = 'SELECT customer_email as customer from ticket where airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
@@ -608,6 +606,30 @@ def view_customers():
 
 
     return render_template("view_flights_customers.html", data1=data1)
+
+@app.route('/viewRatings')
+def view_ratings():
+    if 'staff' not in session:
+        return redirect('/')
+    flight_num = request.args['flight_num']
+    dept_date = request.args['dept_date']
+    dept_time = request.args['dept_time']
+
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    airline_name = cursor.fetchone() # holds the airline name the staff works for
+    cursor.close()
+
+    # check flight existance
+    cursor = conn.cursor()
+    query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+    cursor.execute(query, (airline_name['airline_name'], flight_num, dept_date, dept_time))
+    data = cursor.fetchall()
+    cursor.close()
+    if not data:
+        return render_template("TODO", message="The flight you selected does not exist")
 
 @app.route('/viewmostfreqcust')
 def view_most_freq_customer():
@@ -831,6 +853,7 @@ def change_flight_status_post():
 def logout():
     session.pop('staff', None)
     session.pop('cust', None)
+    session.pop('cust_ticket', None)
     return redirect('/')
 
 app.secret_key = 'some key that you will never guess'
