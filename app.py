@@ -634,7 +634,27 @@ def view_ratings():
     data = cursor.fetchall()
     cursor.close()
     if not data:
-        return render_template("TODO", message="The flight you selected does not exist")
+        return render_template("view_flights_rating.html", message="The flight you selected does not exist")
+
+    # Get average ratings of the flight selected
+    cursor = conn.cursor()
+    query = 'SELECT AVG(rating) as average_rating from review where airline_name = %s and flight_dept_date = %s and flight_dept_time = %s and flight_num = %s'
+    cursor.execute(query, (airline_name['airline_name'], dept_date, dept_time, flight_num))
+    average_rating = cursor.fetchone() # Holds the average rating of the flight selected
+    cursor.close()
+
+    # Get the ratings and comments of each customer for the fligt selected
+    cursor = conn.cursor()
+    query = 'SELECT customer_email as customer, rating, comments from review where airline_name = %s and flight_dept_date = %s and flight_dept_time = %s and flight_num = %s'
+    cursor.execute(query, (airline_name['airline_name'], dept_date, dept_time, flight_num))
+    data = cursor.fetchall() # Holds all the customer's ratings for the flight
+    cursor.close()
+
+    if not data:
+        return render_template("view_flights_rating.html", message="There are no ratings or comments for the flight selected")
+
+    return render_template("view_flights_rating.html", average_rating=average_rating, data=data, message=None)
+
 
 @app.route('/viewmostfreqcust')
 def view_most_freq_customer():

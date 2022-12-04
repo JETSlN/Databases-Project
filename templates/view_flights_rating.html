@@ -1,0 +1,41 @@
+<html>
+<head>
+</head>
+
+{% if message %}
+	<p class="error"><strong>{{ message }}!!</strong></p>
+{% else %}
+
+<h1>The Average rating for the flight you selected is <u>{{average_rating['average_rating']}}</u></h1>
+
+	<text>Below is a list of the flight's ratings: </text> </br>
+	<style type="text/css">
+		table, th, td{
+			border: 1px solid black;
+		}
+	</style>
+
+	<table>
+		<th>Customer</th>
+        <th>Rating</th>
+        <th>Comments</th>
+
+	{% for line in data %}
+		<tr>
+			<td>{{line['customer']}}</td>
+            <td>{{line['rating']}}</td>
+            <td>{{line['comments']}}</td>
+		</tr>
+	{% endfor %}
+	</table>
+	 </br> </br> </br>
+
+{% endif %}
+
+
+<a href="/viewAirlineFlights">Go back</a>
+
+</body>
+
+
+</html>
