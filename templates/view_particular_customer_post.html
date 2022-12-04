@@ -2,7 +2,7 @@
 <head>
 </head>
 
-<text>List of past flight for {{customer}} </text> </br>
+<text>List of past flights for {{customer}} </text> </br>
 
 <style type="text/css">
 	table, th, td{
@@ -17,14 +17,11 @@
 	<th>Flight Dept Time</th>
 	<th>Flight Arrival Date</th>
 	<th>Flight Arrival Time</th>
-	<th>Base Price</th>
+	<th>Paid Price</th>
 	<th>Status</th>
 	<th>Dept Airport Name</th>
 	<th>Arrival Airport Name</th>
 	<th>Airplane ID</th>
-	<th>Return flight Num</th>
-	<th>Return flight Date</th>
-	<th>Return flight Time</th>
 
 {% for line in data %}
     <tr>
@@ -34,14 +31,11 @@
         <td>{{line['flight_dept_time']}}</td>
         <td>{{line['flight_arrival_date']}}</td>
         <td>{{line['flight_arrival_time']}}</td>
-        <td>{{line['base_price']}}</td>
+        <td>{{line['sold_price']}}</td>
         <td>{{line['status']}}</td>
         <td>{{line['dept_airport_name']}}</td>
         <td>{{line['arrival_airport_name']}}</td>
         <td>{{line['airplane_id']}}</td>
-        <td>{{line['return_flight_num']}}</td>
-        <td>{{line['return_flight_date']}}</td>
-        <td>{{line['return_flight_time']}}</td>
     </tr>
 {% endfor %}
 </table>
