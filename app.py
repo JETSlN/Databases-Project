@@ -539,7 +539,20 @@ def view_customers():
     cursor.close()
     if not data:
         pass # TODO error message
-    # TODO print results
+    # TODO print results: DONE
+    message = None
+    cursor = conn.cursor()
+    query = 'SELECT customer_email as customer from ticket where airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+    cursor.execute(query, (airline_name['airline_name'], flight_num, dept_date, dept_time))
+    data1 = cursor.fetchall() # all the customer emails selected by the above query
+    cursor.close()
+
+    if not data1:
+        message = "There are no customers for the flight you selected"
+        return render_template("view_flights_customers.html", message=message)
+
+
+    return render_template("view_flights_customers.html", data1=data1)
 
 @app.route('/viewmostfreqcust')
 def view_most_freq_customer():
