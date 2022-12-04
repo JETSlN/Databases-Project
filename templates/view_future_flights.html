@@ -68,7 +68,7 @@
 		<td>{{flight['return_number']}}</td>
 		<td>{{flight['return_date']}}</td>
 		{% if loggedincust %}
-		<td><button onclick="location.href = '/purchaseTicket?airline_name={{flight['airline_name']}}&flight_num={{flight['flight_num']}}&dept_date={{flight['dept_date']}}&dept_time={{flight['dept_time']}}';">Purchase Ticket</button></td>
+		<td><button onclick="location.href = '/purchaseTicket?airline_name={{flight['airline_name']}}&flight_num={{flight['flight_num']}}&base_price={{flight['base_price']}}&dept_date={{flight['dept_date']}}&dept_time={{flight['dept_time']}}';">Purchase Ticket</button></td>
 		{% endif %}
 	</tr>
 {% endfor %}
