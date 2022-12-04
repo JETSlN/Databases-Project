@@ -8,6 +8,20 @@
 
 {% if not badflight %}
 <form action="/purchaseTicketPost" method="POST">
+	<input type="hidden" name ="airline_name" value="{{airline_name}}">
+	<input type="hidden" name ="flight_num" value="{{flight_num}}">
+	<input type="hidden" name ="dept_date" value="{{dept_date}}">
+	<input type="hidden" name ="dept_time" value="{{dept_time}}">
+	<input type="hidden" name ="base_price" value="{{base_price}}">
+	<input type="radio" id="credit" name="card_type" value="Credit" required>
+
+	<label for="credit">Credit</label><br>
+	<input type="radio" id="debit" name="card_type" value="Debit">
+	<label for="debit">Debit</label><br>
+
+	<input type="text" name = "card_number" placeholder="Card Number" required/></br>
+	<input type="text" name = "card_name" placeholder="Card Name" required/></br>
+	<input type="date" name = "card_date" placeholder="Card Date" required/> </br>
 
 	<input type="submit" value = "Purchase ticket" />
 	{% if error %}
