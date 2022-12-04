@@ -537,6 +537,7 @@ def purchaseTicketFormPost():
     cursor.execute(ins, (max_num, flight_num, dept_date, dept_time, airline_name, session['cust'], base_price, card_type, card_number, card_name, card_date))
     conn.commit()
     cursor.close()
+    session.pop('cust_ticket', None)
     return render_template('purchase_ticket.html', badflight="SUCCESS")
 
 
