@@ -7,6 +7,15 @@
 {% endif %}
 
 {% if not badflight %}
+<p>Purchase your ticket below. Return flights are not included.</p>
+<p>Airline Name: {{info['name']}}</p>
+<p>Flight number: {{info['num']}}</p>
+<p>Flight date: {{info['date']}}</p>
+<p>Flight time: {{info['time']}}</p>
+<p>Cost: {{info['cost']}}</p>
+{% if info['extra'] %}
+<p>Your ticket cost is 25% higher because the flight is more than 60% full.</p>
+{% endif %}
 <form action="/purchaseTicketPost" method="POST">
 	<input type="radio" id="credit" name="card_type" value="Credit" required>
 
