@@ -265,8 +265,6 @@ def add_airplanePost():
         cursor.close()
         return redirect('/staffHome')
 
-
-
 @app.route('/viewFutureFlights')
 def view_future_flights():
     return render_template('view_future_flights.html', loggedincust='cust' in session)
@@ -479,10 +477,11 @@ def purchaseTicketForm():
     cursor = conn.cursor()
     query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
     cursor.execute(query, (airline_name, flight_num, dept_date, dept_time))
-    data = cursor.fetchall()
+    data = cursor.fetchone()
     cursor.close()
     if not data:
         return render_template('purchase_ticket.html', badflight='The flight you selected was not found.')
+    base_price = data['base_price']
     #create view to see seats
     cursor = conn.cursor()
     query = 'CREATE VIEW IF NOT EXISTS airplane_space as (SELECT * FROM flight natural join airplane natural join ticket)'
@@ -491,19 +490,22 @@ def purchaseTicketForm():
     cursor.execute(query, (airline_name, flight_num, dept_date, dept_time))
     data = cursor.fetchone()
     cursor.close()
-    if not data:
-        session['cust_ticket'] = {"airline_name": airline_name, "flight_num": flight_num, "dept_date": dept_date,
-                                  "dept_time": dept_time, "base_price": data['base_price']}
-        return render_template('purchase_ticket.html', badflight=False)
-    elif data['COUNT(*)'] == data['num_seats']:
+
+    # Note: Data is empty if flight seats are empty
+    info = {'name': airline_name, 'num': flight_num, 'date': dept_date, 'time': dept_time}
+    if data and data['COUNT(*)'] >= data['num_seats']:
         return render_template('purchase_ticket.html', badflight='The flight you selected is full.')
-    elif data['COUNT(*)']/data['num_seats'] >= 0.6:
-        session['cust_ticket'] = {"airline_name": airline_name, "flight_num": flight_num, "dept_date":dept_date, "dept_time": dept_time, "base_price":(float(data['base_price']) * 1.25)}
-        return render_template('purchase_ticket.html', badflight=False)
+    elif data and data['COUNT(*)']/data['num_seats'] >= 0.6:
+        actual_cost = float(base_price) * 1.25
+        info['cost'] = actual_cost
+        info['extra'] = True
+        session['cust_ticket'] = {"airline_name": airline_name, "flight_num": flight_num, "dept_date":dept_date, "dept_time": dept_time, "price": actual_cost}
+        return render_template('purchase_ticket.html', badflight=False, info=info)
     else:
+        info['cost'] = base_price
         session['cust_ticket'] = {"airline_name": airline_name, "flight_num": flight_num, "dept_date": dept_date,
-                                  "dept_time": dept_time, "base_price": data['base_price']}
-        return render_template('purchase_ticket.html', badflight=False)
+                                  "dept_time": dept_time, "price": base_price}
+        return render_template('purchase_ticket.html', badflight=False, info=info)
 
 
 @app.route('/purchaseTicketPost', methods=["GET", "POST"])
@@ -514,20 +516,23 @@ def purchaseTicketFormPost():
     flight_num = session['cust_ticket']["flight_num"]
     dept_date = session['cust_ticket']["dept_date"]
     dept_time = session['cust_ticket']["dept_time"]
-    base_price = session['cust_ticket']["base_price"]
+    base_price = session['cust_ticket']["price"]
     card_type = request.form['card_type']
     card_name = request.form['card_name']
     card_number = request.form['card_number']
     card_date = request.form['card_date']
     if not card_number.isdigit():
-        return render_template('purchase_ticket.html', badflight="Fix card number")
+        return render_template('purchase_ticket.html', badflight="Purchase failed (bad card number).")
     card_number = int(card_number)
     cursor = conn.cursor()
-    query = 'SELECT MAX(CAST(SUBSTRING(ticket_id,4,LENGTH(ticket_id)-3) AS INT)) as l FROM ticket WHERE flight_num = %s'
-    cursor.execute(query, flight_num)
+
+    # select next ID
+    query = 'SELECT MAX(CAST(SUBSTRING(ticket_id,%s,LENGTH(ticket_id)) AS INT)) as l FROM ticket WHERE flight_num = %s and airline_name = %s and flight_dept_date = %s and flight_dept_time = %s'
+    cursor.execute(query, (len(flight_num) + 2, flight_num, airline_name, dept_date, dept_time))
     data = cursor.fetchone()
     cursor.close()
-    if data:
+    print(data, len(flight_num) + 1, len(flight_num), flight_num)
+    if data and data['l'] is not None:
         max_num = flight_num+"-"+str(int(data['l']) + 1)
     else:
         max_num = flight_num+"-0"
@@ -537,7 +542,7 @@ def purchaseTicketFormPost():
     conn.commit()
     cursor.close()
     session.pop('cust_ticket', None)
-    return render_template('purchase_ticket.html', badflight="SUCCESS")
+    return render_template('purchase_ticket.html', badflight="Ticket successfully purchased!")
 
 
 @app.route('/cancelTrip')
@@ -683,7 +688,7 @@ def view_particular_customer():
 
     #get list of customer for that airline
     cursor = conn.cursor()
-    query = 'SELECT customer_email from ticket where airline_name = %s'
+    query = 'SELECT DISTINCT customer_email from ticket where airline_name = %s'
     cursor.execute(query, airline_name['airline_name'])
     data = cursor.fetchall() # holds a list of customers for that airline
     cursor.close()
