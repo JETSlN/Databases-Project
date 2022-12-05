@@ -265,6 +265,112 @@ def add_airplanePost():
         cursor.close()
         return redirect('/staffHome')
 
+@app.route('/addFlight')
+def add_flight():
+    if 'staff' not in session:
+        return redirect('/')
+    return render_template('add_flight.html')
+
+@app.route('/addFlightPost', methods=['GET', 'POST'])
+def add_flightPost():
+    if 'staff' not in session:
+        return redirect('/')
+    #get airline name
+    cursor = conn.cursor()
+    query = 'SELECT airline_name FROM airlinestaff WHERE username = %s'
+    cursor.execute(query, (session['staff']))
+    staff_data = cursor.fetchone()
+    cursor.close()
+
+    #grabs information from the forms
+    flight_num = request.form['flight_num']
+    flight_dept_date = request.form['flight_dept_date']
+    flight_dept_time = request.form['flight_dept_time']
+    flight_arrival_date = request.form['flight_arrival_date']
+    flight_arrival_time = request.form['flight_arrival_time']
+    base_price = request.form['base_price']
+    dept_airport_name = request.form['dept_airport_name']
+    arrival_airport_name = request.form['arrival_airport_name']
+    airplane_id = request.form['airplane_id']
+    status = request.form['status']
+
+    try:
+        float(base_price)
+    except:
+        error = 'Price not a float num'
+        return render_template('add_flight.html', error=error)
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'SELECT (CURRENT_DATE() + INTERVAL 1 DAY) as days'
+    cursor.execute(query)
+    data = cursor.fetchone()
+    cursor.close()
+    print(data["days"], flight_dept_date)
+    if str(data["days"]) > str(flight_dept_date):
+        error = 'Airplane date past already'
+        return render_template('add_flight.html', error=error)
+
+    if flight_dept_date > flight_arrival_date or (flight_dept_date >= flight_arrival_date and flight_dept_time > flight_arrival_date):
+        error = 'Airplane can not arrive before departure'
+        return render_template('add_flight.html', error=error)
+
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'Select * FROM airport WHERE airport_name = %s'
+    cursor.execute(query, dept_airport_name)
+    data = cursor.fetchone()
+    cursor.close()
+
+    if not data:
+        error = 'Departure airport does not exist'
+        return render_template('add_flight.html', error=error)
+
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'Select * FROM airport WHERE airport_name = %s'
+    cursor.execute(query, arrival_airport_name)
+    data = cursor.fetchone()
+    cursor.close()
+
+    if not data:
+        error = 'Arrival airport does not exist'
+        return render_template('add_flight.html', error=error)
+
+    # cursor used to send queries
+    cursor = conn.cursor()
+    # executes query
+    query = 'Select * FROM airplane WHERE airplane_id = %s and airline_name = %s'
+    cursor.execute(query, (airplane_id, staff_data['airline_name']))
+    data = cursor.fetchone()
+    cursor.close()
+
+    if not data:
+        error = 'Airplane do not exist'
+        return render_template('add_flight.html', error=error)
+
+    #cursor used to send queries
+    cursor = conn.cursor()
+    #executes query
+    query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+    cursor.execute(query, (staff_data['airline_name'], flight_num, flight_dept_date, flight_dept_time))
+    data = cursor.fetchone()
+    cursor.close()
+    error = None
+    if(data):
+        error = 'Airplane ID already exists.'
+
+        return render_template('add_flight.html', error=error)
+    else:
+        cursor = conn.cursor()
+        ins = 'INSERT INTO flight VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, NULL, NULL)'
+        cursor.execute(ins, (staff_data['airline_name'], flight_num, flight_dept_date, flight_dept_time, flight_arrival_date, flight_arrival_time, base_price, status, dept_airport_name, arrival_airport_name, airplane_id))
+        conn.commit()
+        cursor.close()
+        return redirect('/staffHome')
+
 @app.route('/viewFutureFlights')
 def view_future_flights():
     return render_template('view_future_flights.html', loggedincust='cust' in session)
