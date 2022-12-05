@@ -3,7 +3,6 @@
 </head>
 <body>
 <form action="/addFlightPost" method="POST">
-	<input type="text" name = "airline_name" placeholder="Airline Name" required/></br>
 	<input type="text" name = "flight_num" placeholder="Flight Number" required/> </br>
 
     <text>Departure Date </text>
@@ -16,7 +15,7 @@
     <text>Arrival Time </text>
 	<input type="time" name = "flight_arrival_time" required/> </br>
 
-    <input type="text" name="base_price" placeholder="Price" required>
+    <input type="text" name="base_price" placeholder="Price" required> </br>
 
     <text> Status</text> </br>
 	<input type="radio" id="On Time" name="status" value="On Time" required/>
@@ -30,19 +29,6 @@
     <input type="text" name="arrival_airport_name" placeholder="Arrival Airport Name" required></br>
 
     <input type="text" name="airplane_id" placeholder="Airplane ID" required></br>
-
-    <input type="text" name = "return_flight_num" placeholder="Return Flight Number"/> </br>
-
-
-    <text>Return Departure Date </text>
-	<input type="date" name = "return_dept_date"/> </br>
-    <text>Return Departure Time </text>
-	<input type="time" name = "return_dept_time"/> </br>
-
-    <text>Return Arrival Date </text>
-	<input type="date" name = "return_arrival_date"/> </br>
-    <text>Return Arrival Time </text>
-	<input type="time" name = "return_arrival_time"/> </br>
 
 	<input type="submit" value = "Add Flight" />
 	{% if error %}
