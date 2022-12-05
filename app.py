@@ -371,6 +371,85 @@ def add_flightPost():
         cursor.close()
         return redirect('/staffHome')
 
+@app.route('/addRating')
+def add_rating():
+    if 'cust' not in session:
+        return redirect('/')
+
+    airline_name = request.args['airline_name']
+    flight_num = request.args['flight_num']
+    flight_dept_date = request.args['dept_date']
+    flight_dept_time = request.args['dept_time']
+    info = {'name': airline_name, 'num': flight_num, 'date': flight_dept_date, 'time': flight_dept_time}
+
+    flight_arr_date = request.args['arr_date'].split()[0]
+    flight_arr_time = request.args['arr_date'].split()[1]
+
+    session['custRating'] = {'name': airline_name, 'num': flight_num, 'date': flight_dept_date,
+                             'time': flight_dept_time, "date2": flight_arr_date, "time2":flight_arr_time}
+    return render_template('add_rating.html', error = False, info = info)
+
+@app.route('/addRatingPost', methods=['GET', 'POST'])
+def add_ratingPost():
+    if 'cust' not in session:
+        return redirect('/')
+    #grabs information from the forms
+
+    rate = request.form['rate']
+    comment = request.form['comment']
+    airline_name = session['custRating']['name']
+    flight_num = session['custRating']['num']
+    flight_dept_date = session['custRating']['date']
+    flight_dept_time = session['custRating']['time']
+    flight_arr_date = session['custRating']['date2']
+    flight_arr_time = session['custRating']['time2']
+    cust = session['cust']
+    info = {'name': airline_name, 'num': flight_num, 'date': flight_dept_date, 'time': flight_dept_time}
+    # cursor used to send queries
+    cursor = conn.cursor()
+    # executes query
+    query = 'SELECT * FROM review WHERE customer_email = %s AND airline_name = %s AND flight_num = %s AND flight_dept_date = %s AND flight_dept_time = %s'
+
+    cursor.execute(query, (cust, airline_name, flight_num, flight_dept_date, flight_dept_time))
+    data = cursor.fetchone()
+    error = None
+    cursor.close()
+    if (data):
+        error = 'Rating already exists.'
+        cursor.close()
+        return render_template('add_rating.html', badrating="Rating already exists",error=False, info=info)
+
+    cursor = conn.cursor()
+    query = 'SELECT CURRENT_DATE() as days, CURRENT_TIME() as times'
+    cursor.execute(query)
+    data = cursor.fetchone()
+    cursor.close()
+
+    if (str(data["days"]) < str(flight_arr_date)) or (
+            str(data["days"]) == str(flight_arr_date) and str(data["times"]) < str(flight_arr_time)):
+        error = 'Your flight is not completed yet'
+        return render_template('add_rating.html', badrating='Your flight is not completed yet', error=error, info=info)
+
+
+
+    try:
+        float(rate)
+    except:
+        error = 'Invalid rating please rate from 0-5 stars'
+        return render_template('add_rating.html', error=error, info=info, badrating=False)
+
+    if float(rate) < 0 or floar(rate) > 5:
+        error = 'Invalid rating please rate from 0-5 stars'
+        return render_template('add_rating.html', error=error, info=info,  badrating=False)
+
+    cursor = conn.cursor()
+    ins = 'INSERT INTO airport VALUES(%s, %s, %s, %s, %s, %s, %s)'
+    cursor.execute(ins, (cust, airline_name, flight_num, flight_dept_date, flight_dept_time, rate, comment))
+    conn.commit()
+    cursor.close()
+    session.pop('custRating', None)
+    return render_template('add_rating.html', badrating="Ticket successfully purchased!", error=False)
+
 @app.route('/viewFutureFlights')
 def view_future_flights():
     return render_template('view_future_flights.html', loggedincust='cust' in session)

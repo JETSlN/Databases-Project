@@ -47,6 +47,7 @@
 	{% if not staff %}
 	<th>Purchase Date</th>
 	<th>Cancel Trip</th>
+	<th>Give Rating</th>
 	{% endif %}
 	{% if staff %}
 	<th>Customers</th>
@@ -74,6 +75,7 @@
 		{% if not staff %}
 		<td>{{flight['purchase_date']}}</td>
 		<td><button onclick="location.href = '/cancelTrip?ticket_id={{flight['ticket_id']}}';">Cancel</button></td>
+		<td><button onclick="location.href = '/addRating?airline_name={{flight['airline_name']}}&flight_num={{flight['flight_num']}}&dept_date={{flight['dept_date']}}&dept_time={{flight['dept_time']}}&arr_date={{flight['arr_date']}}';">Rate</button></td>
 		{% endif %}
 		{% if staff %}
 		<td><button onclick="location.href = '/viewCustomers?flight_num={{flight['flight_num']}}&dept_date={{flight['dept_date']}}&dept_time={{flight['dept_time']}}';">View</button></td>
@@ -83,6 +85,8 @@
 {% endfor %}
 </table>
 {% endif %}
+
+
 
 {% if not staff %}
 <a href="/custHome">Go back</a>

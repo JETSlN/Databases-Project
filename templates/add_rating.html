@@ -1,0 +1,34 @@
+<html>
+<head>
+</head>
+<body>
+{% if badrating %}
+<p>{{badrating}}</p>
+{% endif %}
+
+{% if not badrating %}
+<p>Make a rating</p>
+<p>Airline Name: {{info['name']}}</p>
+<p>Flight number: {{info['num']}}</p>
+<p>Flight date: {{info['date']}}</p>
+<p>Flight time: {{info['time']}}</p>
+
+
+<form action="/addRatingPost" method="POST">
+
+    <p><label for="comment">Review of Flight:</label></p>
+    <textarea id="comment" name="comment" rows="4" cols="50" placeholder="Comment"></textarea><br>
+    <input type="text" name = "rate" placeholder="Rate 1-5" required/></br>
+	<input type="submit" value = "Make Review"/>
+	{% if error %}
+		<p class="error"><strong>Error:</strong> {{error}}</p>
+	{% endif %}
+</form>
+{% endif %}
+
+<a href="/viewMyFlights">Go back</a>
+
+</body>
+
+
+</html>
