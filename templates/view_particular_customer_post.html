@@ -2,45 +2,50 @@
 <head>
 </head>
 
-<text>List of past flights for {{customer}} </text> </br>
 
-<style type="text/css">
-	table, th, td{
-		border: 1px solid black;
-	}
-</style>
 
-<table>
-	<th>Airline Name</th>
-    <th>Flight Num</th>
-	<th>Flight Dept Date</th>
-	<th>Flight Dept Time</th>
-	<th>Flight Arrival Date</th>
-	<th>Flight Arrival Time</th>
-	<th>Paid Price</th>
-	<th>Status</th>
-	<th>Dept Airport Name</th>
-	<th>Arrival Airport Name</th>
-	<th>Airplane ID</th>
+{% if error %}
+	<p class="error"><strong>{{ error }}</strong></p>
+{% else %}
+    <text>List of past flights for {{customer}} </text> </br>
 
-{% for line in data %}
-    <tr>
-        <td>{{line['airline_name']}}</td>
-        <td>{{line['flight_num']}}</td>
-        <td>{{line['flight_dept_date']}}</td>
-        <td>{{line['flight_dept_time']}}</td>
-        <td>{{line['flight_arrival_date']}}</td>
-        <td>{{line['flight_arrival_time']}}</td>
-        <td>{{line['sold_price']}}</td>
-        <td>{{line['status']}}</td>
-        <td>{{line['dept_airport_name']}}</td>
-        <td>{{line['arrival_airport_name']}}</td>
-        <td>{{line['airplane_id']}}</td>
-    </tr>
-{% endfor %}
-</table>
- </br> </br> </br>
+    <style type="text/css">
+        table, th, td{
+            border: 1px solid black;
+        }
+    </style>
 
+    <table>
+        <th>Airline Name</th>
+        <th>Flight Num</th>
+        <th>Flight Dept Date</th>
+        <th>Flight Dept Time</th>
+        <th>Flight Arrival Date</th>
+        <th>Flight Arrival Time</th>
+        <th>Paid Price</th>
+        <th>Status</th>
+        <th>Dept Airport Name</th>
+        <th>Arrival Airport Name</th>
+        <th>Airplane ID</th>
+
+    {% for line in data %}
+        <tr>
+            <td>{{line['airline_name']}}</td>
+            <td>{{line['flight_num']}}</td>
+            <td>{{line['flight_dept_date']}}</td>
+            <td>{{line['flight_dept_time']}}</td>
+            <td>{{line['flight_arrival_date']}}</td>
+            <td>{{line['flight_arrival_time']}}</td>
+            <td>{{line['sold_price']}}</td>
+            <td>{{line['status']}}</td>
+            <td>{{line['dept_airport_name']}}</td>
+            <td>{{line['arrival_airport_name']}}</td>
+            <td>{{line['airplane_id']}}</td>
+        </tr>
+    {% endfor %}
+    </table>
+     </br> </br> </br>
+{% endif %}
 
 </body>
 

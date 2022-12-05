@@ -927,6 +927,16 @@ def view_particular_customer_post():
     airline_name = cursor.fetchone() # holds the airline name the staff works for
     cursor.close()
 
+    #Check if customer exists
+    cursor = conn.cursor()
+    query = 'SELECT * from ticket where airline_name = %s and customer_email = %s'
+    cursor.execute(query, (airline_name['airline_name'], customer))
+    data = cursor.fetchone() # holds a list of customers for that airline
+    cursor.close()
+
+    if not data:
+        return render_template("view_particular_customer_post.html", error="This customer doesn't exist, please provide a correct customer email")
+
     #get all flights of that customer
     cursor = conn.cursor()
     query = 'SELECT * from flight, ticket where flight.flight_num = ticket.flight_num ' \
@@ -935,7 +945,7 @@ def view_particular_customer_post():
     data = cursor.fetchall() # holds the airline name the staff works for
     cursor.close()
 
-    return render_template("view_particular_customer_post.html", customer=customer, data=data)
+    return render_template("view_particular_customer_post.html", customer=customer, data=data, error=None)
 
 @app.route('/view_earned_reports')
 def view_earned_reports():
