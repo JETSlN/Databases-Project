@@ -438,12 +438,12 @@ def add_ratingPost():
         error = 'Invalid rating please rate from 0-5 stars'
         return render_template('add_rating.html', error=error, info=info, badrating=False)
 
-    if float(rate) < 0 or floar(rate) > 5:
+    if float(rate) < 0 or float(rate) > 5:
         error = 'Invalid rating please rate from 0-5 stars'
         return render_template('add_rating.html', error=error, info=info,  badrating=False)
 
     cursor = conn.cursor()
-    ins = 'INSERT INTO airport VALUES(%s, %s, %s, %s, %s, %s, %s)'
+    ins = 'INSERT INTO review VALUES(%s, %s, %s, %s, %s, %s, %s)'
     cursor.execute(ins, (cust, airline_name, flight_num, flight_dept_date, flight_dept_time, rate, comment))
     conn.commit()
     cursor.close()
