@@ -348,7 +348,7 @@ def add_flightPost():
     cursor.close()
 
     if not data:
-        error = 'Airplane do not exist'
+        error = 'Airplane does not exist'
         return render_template('add_flight.html', error=error)
 
     #cursor used to send queries
