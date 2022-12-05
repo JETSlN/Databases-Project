@@ -706,9 +706,22 @@ def purchaseTicketFormPost():
     card_name = request.form['card_name']
     card_number = request.form['card_number']
     card_date = request.form['card_date']
+
     if not card_number.isdigit():
         return render_template('purchase_ticket.html', badflight="Purchase failed (bad card number).")
     card_number = int(card_number)
+
+    cursor = conn.cursor()
+
+    # select next ID
+    query = 'SELECT CURRENT_DATE() as dates'
+    cursor.execute(query)
+    data = cursor.fetchone()
+    cursor.close()
+
+    if str(data['dates']) >= str(card_date):
+        return render_template('purchase_ticket.html', badflight="Your card expired")
+
     cursor = conn.cursor()
 
     # select next ID
@@ -716,7 +729,7 @@ def purchaseTicketFormPost():
     cursor.execute(query, (len(flight_num) + 2, flight_num, airline_name, dept_date, dept_time))
     data = cursor.fetchone()
     cursor.close()
-    print(data, len(flight_num) + 1, len(flight_num), flight_num)
+
     if data and data['l'] is not None:
         max_num = flight_num+"-"+str(int(data['l']) + 1)
     else:
