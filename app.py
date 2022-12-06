@@ -306,7 +306,6 @@ def add_flightPost():
     cursor.execute(query)
     data = cursor.fetchone()
     cursor.close()
-    print(data["days"], flight_dept_date)
     if str(data["days"]) > str(flight_dept_date):
         error = 'Airplane date past already'
         return render_template('add_flight.html', error=error)
@@ -361,14 +360,35 @@ def add_flightPost():
     error = None
     if(data):
         error = 'Airplane ID already exists.'
-
         return render_template('add_flight.html', error=error)
     else:
+        # Check if departure flight is valid (link this flight as a return flight)
+        link_flight = False
+        if request.form['dept_flight_num'] and request.form['dept_flight_date'] and request.form['dept_flight_time']:
+            cursor = conn.cursor()
+            query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+            cursor.execute(query, (staff_data['airline_name'], request.form['dept_flight_num'], request.form['dept_flight_date'], request.form['dept_flight_time']))
+            cursor.close()
+            data = cursor.fetchone()
+            if data is None:
+                return render_template('add_flight.html', error="Departure flight linked is invalid.")
+            if data['return_flight_num']:
+                return render_template('add_flight.html', error="Departure flight is already linked to a return flight.")
+            link_flight = True
+
         cursor = conn.cursor()
         ins = 'INSERT INTO flight VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, NULL, NULL)'
         cursor.execute(ins, (staff_data['airline_name'], flight_num, flight_dept_date, flight_dept_time, flight_arrival_date, flight_arrival_time, base_price, status, dept_airport_name, arrival_airport_name, airplane_id))
         conn.commit()
         cursor.close()
+
+        if link_flight:
+            cursor = conn.cursor()
+            ins = 'UPDATE flight SET return_flight_num = %s, return_flight_date = %s, return_flight_time = %s WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+            cursor.execute(ins, (flight_num, flight_dept_date, flight_dept_time, staff_data['airline_name'], request.form['dept_flight_num'], request.form['dept_flight_date'], request.form['dept_flight_time']))
+            conn.commit()
+            cursor.close()
+
         return redirect('/staffHome')
 
 @app.route('/addRating')
