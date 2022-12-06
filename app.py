@@ -989,13 +989,29 @@ def view_earned_reports_post():
 
     #get total amount of tickets sold by that airline
     cursor = conn.cursor()
-    query = 'SELECT airline_name, count(airline_name) as amount from ticket where ' \
+    query = 'SELECT airline_name, count(ticket_id) as amount from ticket where ' \
             'purchase_date BETWEEN %s and %s and airline_name=%s and customer_email IS NOT NULL;'
     cursor.execute(query, (start_date, end_date, airline_name['airline_name']))
     data = cursor.fetchone() # holds the total amount of tickets sold by the airline
     cursor.close()
 
-    return render_template("view_earned_reports_posts.html", data=data, start_date=start_date, end_date=end_date)
+    # get the tickets sold month-wise
+    cursor = conn.cursor()
+    query = 'SELECT Month(purchase_date), count(ticket_id) from ticket where purchase_date BETWEEN %s and %s and airline_name = %s and customer_email is not NULL group by Month(purchase_date)'
+    cursor.execute(query, (start_date, end_date, airline_name['airline_name']))
+    data1 = cursor.fetchall()
+    cursor.close()
+
+
+    month = {'01':'Janauary','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'}
+
+    if data1:
+        for line in data1:
+            line['Month(purchase_date)'] = month[str(line['Month(purchase_date)'])]
+    else:
+        data1 = None
+
+    return render_template("view_earned_reports_posts.html", data=data, start_date=start_date, end_date=end_date, data1=data1)
 
 @app.route('/view_earned_revenue')
 def view_earned_revenue():
