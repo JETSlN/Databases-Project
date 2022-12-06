@@ -1101,6 +1101,40 @@ def change_flight_status_post():
         cursor.close()
         return redirect('/change_flight_status')
 
+@app.route('/trackSpending')
+def track_spending():
+    if 'cust' not in session:
+        redirect('/')
+    start_date = date.today() - timedelta(days=365)
+    end_date = date.today()
+    return render_template('track_spending.html', startdate=start_date, enddate=end_date)
+
+@app.route('/trackSpendingPost', methods=['GET', 'POST'])
+def track_spending_post():
+    if 'cust' not in session:
+        redirect('/')
+
+    start = request.form['start']
+    end = request.form['end']
+
+    # filter by date and split into months
+    cursor = conn.cursor()
+    query = 'SELECT YEAR(purchase_date) as y, MONTH(purchase_date) as m, sum(sold_price) as s FROM ticket WHERE customer_email = %s and purchase_date >= %s and purchase_date <= %s' \
+            ' GROUP BY YEAR(purchase_date), MONTH(purchase_date) ORDER BY purchase_date DESC'
+    cursor.execute(query, (session['cust'], start, end))
+    data = cursor.fetchall()
+
+    cursor = conn.cursor()
+    query = 'SELECT sum(sold_price) as s FROM ticket WHERE customer_email = %s and purchase_date >= %s and purchase_date <= %s'
+    cursor.execute(query, (session['cust'], start, end))
+    total = cursor.fetchone()
+
+    if not data:
+        found = None
+    else:
+        found = '${} was spent over {} distinct months. View additional information below:'.format(total['s'], len(data))
+    return render_template('track_spending.html', data=data, found=found)
+
 
 @app.route('/logout')
 def logout():
