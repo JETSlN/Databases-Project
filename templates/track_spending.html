@@ -1,0 +1,45 @@
+<html>
+<head>
+</head>
+<body>
+<p>Here you can track your spending based on purchase date. Input some data first:</p>
+
+<form action="/trackSpendingPost" method="POST">
+	<p>The start date to search:</p>
+	<input type="date" name = "start" placeholder="start date" value="{{startdate}}" required /> </br>
+	<p>The end date to search:</p>
+	<input type="date" name = "end" placeholder="end date" value="{{enddate}}" required /> </br>
+	<input type="submit" value = "Query" />
+	{% if not found %}
+		<p><b>No tickets were purchased over this interval!</b></p>
+	{% else %}
+		<p><b>{{found}}</b></p>
+	{% endif %}
+</form>
+
+{% if data %}
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+	<th>Year</th>
+	<th>Month</th>
+	<th>Money Spent</th>
+	
+{% for month in data %}
+	<tr>
+		<td>{{month['y']}}</td>
+		<td>{{month['m']}}</td>
+		<td>{{month['s']}}</td>
+	</tr>
+{% endfor %}
+</table>
+{% endif %}
+</br>
+
+<a href="/custHome">Go back</a>
+</body>
+</html>

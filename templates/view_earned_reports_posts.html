@@ -6,6 +6,30 @@
     are <u>{{ data['amount'] }}</u> ticket(s) </h1></br>
 </br>
 
+{% if data1 %}
+	<style type="text/css">
+		table, th, td{
+			border: 1px solid black;
+		}
+	</style>
+
+	<table>
+		<th>Month</th>
+        <th>Tickets Sold</th>
+
+	{% for line in data1 %}
+		<tr>
+			<td>{{line['Month(purchase_date)']}}</td>
+            <td>{{line['count(ticket_id)']}}</td>
+		</tr>
+	{% endfor %}
+	</table>
+	 </br> </br> </br>
+
+{% endif %}
+
+
+
 <a href="/view_earned_reports">Go back</a>
 
 </body>

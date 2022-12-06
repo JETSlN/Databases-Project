@@ -333,7 +333,6 @@ def add_flightPost():
     cursor.execute(query)
     data = cursor.fetchone()
     cursor.close()
-    print(data["days"], flight_dept_date)
     if str(data["days"]) > str(flight_dept_date):
         error = 'Airplane date past already'
         return render_template('add_flight.html', error=error)
@@ -388,14 +387,35 @@ def add_flightPost():
     error = None
     if(data):
         error = 'Airplane ID already exists.'
-
         return render_template('add_flight.html', error=error)
     else:
+        # Check if departure flight is valid (link this flight as a return flight)
+        link_flight = False
+        if request.form['dept_flight_num'] and request.form['dept_flight_date'] and request.form['dept_flight_time']:
+            cursor = conn.cursor()
+            query = 'SELECT * FROM flight WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+            cursor.execute(query, (staff_data['airline_name'], request.form['dept_flight_num'], request.form['dept_flight_date'], request.form['dept_flight_time']))
+            cursor.close()
+            data = cursor.fetchone()
+            if data is None:
+                return render_template('add_flight.html', error="Departure flight linked is invalid.")
+            if data['return_flight_num']:
+                return render_template('add_flight.html', error="Departure flight is already linked to a return flight.")
+            link_flight = True
+
         cursor = conn.cursor()
         ins = 'INSERT INTO flight VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, NULL, NULL)'
         cursor.execute(ins, (staff_data['airline_name'], flight_num, flight_dept_date, flight_dept_time, flight_arrival_date, flight_arrival_time, base_price, status, dept_airport_name, arrival_airport_name, airplane_id))
         conn.commit()
         cursor.close()
+
+        if link_flight:
+            cursor = conn.cursor()
+            ins = 'UPDATE flight SET return_flight_num = %s, return_flight_date = %s, return_flight_time = %s WHERE airline_name = %s and flight_num = %s and flight_dept_date = %s and flight_dept_time = %s'
+            cursor.execute(ins, (flight_num, flight_dept_date, flight_dept_time, staff_data['airline_name'], request.form['dept_flight_num'], request.form['dept_flight_date'], request.form['dept_flight_time']))
+            conn.commit()
+            cursor.close()
+
         return redirect('/staffHome')
 
 @app.route('/addRating')
@@ -912,8 +932,8 @@ def view_most_freq_customer():
 
     #get a list of the most frequent customers
     cursor = conn.cursor()
-    query = 'SELECT customer, frequency from customer_frequency where frequency = %s'
-    cursor.execute(query, most_freq['max(frequency)'])
+    query = 'SELECT customer, frequency from customer_frequency where frequency = %s and airline_name = %s'
+    cursor.execute(query, (most_freq['max(frequency)'], airline_name['airline_name']))
     data = cursor.fetchall() # holds the [most frequent customer, frequency]
     cursor.close()
 
@@ -954,15 +974,25 @@ def view_particular_customer_post():
     airline_name = cursor.fetchone() # holds the airline name the staff works for
     cursor.close()
 
+    #Check if customer exists
+    cursor = conn.cursor()
+    query = 'SELECT * from ticket where airline_name = %s and customer_email = %s'
+    cursor.execute(query, (airline_name['airline_name'], customer))
+    data = cursor.fetchone() # holds a list of customers for that airline
+    cursor.close()
+
+    if not data:
+        return render_template("view_particular_customer_post.html", error="This customer doesn't exist, please provide a correct customer email")
+
     #get all flights of that customer
     cursor = conn.cursor()
     query = 'SELECT * from flight, ticket where flight.flight_num = ticket.flight_num ' \
-            'and customer_email = %s and flight.airline_name = %s and flight.airline_name = ticket.airline_name;'
+            'and customer_email = %s and flight.airline_name = %s and flight.airline_name = ticket.airline_name and flight.flight_dept_date = ticket.flight_dept_date and flight.flight_dept_time = ticket.flight_dept_time;'
     cursor.execute(query, (customer, (airline_name['airline_name'])))
     data = cursor.fetchall() # holds the airline name the staff works for
     cursor.close()
 
-    return render_template("view_particular_customer_post.html", customer=customer, data=data)
+    return render_template("view_particular_customer_post.html", customer=customer, data=data, error=None)
 
 @app.route('/view_earned_reports')
 def view_earned_reports():
@@ -986,13 +1016,29 @@ def view_earned_reports_post():
 
     #get total amount of tickets sold by that airline
     cursor = conn.cursor()
-    query = 'SELECT airline_name, count(airline_name) as amount from ticket where ' \
+    query = 'SELECT airline_name, count(ticket_id) as amount from ticket where ' \
             'purchase_date BETWEEN %s and %s and airline_name=%s and customer_email IS NOT NULL;'
     cursor.execute(query, (start_date, end_date, airline_name['airline_name']))
     data = cursor.fetchone() # holds the total amount of tickets sold by the airline
     cursor.close()
 
-    return render_template("view_earned_reports_posts.html", data=data, start_date=start_date, end_date=end_date)
+    # get the tickets sold month-wise
+    cursor = conn.cursor()
+    query = 'SELECT Month(purchase_date), count(ticket_id) from ticket where purchase_date BETWEEN %s and %s and airline_name = %s and customer_email is not NULL group by Month(purchase_date)'
+    cursor.execute(query, (start_date, end_date, airline_name['airline_name']))
+    data1 = cursor.fetchall()
+    cursor.close()
+
+
+    month = {'01':'Janauary','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'}
+
+    if data1:
+        for line in data1:
+            line['Month(purchase_date)'] = month[str(line['Month(purchase_date)'])]
+    else:
+        data1 = None
+
+    return render_template("view_earned_reports_posts.html", data=data, start_date=start_date, end_date=end_date, data1=data1)
 
 @app.route('/view_earned_revenue')
 def view_earned_revenue():
@@ -1014,6 +1060,9 @@ def view_earned_revenue():
     past_monthRev = cursor.fetchone() # holds the revenue for past month
     cursor.close()
 
+    if not past_monthRev['total']:
+        past_monthRev['total'] = 0
+
     # get earned revenue for past year
     cursor = conn.cursor()
     query = 'select sum(sold_price) as total from ticket ' \
@@ -1021,6 +1070,9 @@ def view_earned_revenue():
     cursor.execute(query, (airline_name['airline_name']))
     past_yearRev = cursor.fetchone() # holds the revenue for past year
     cursor.close()
+
+    if not past_yearRev['total']:
+        past_yearRev['total'] = 0
 
     return render_template("view_earned_revenue.html", past_monthRev=past_monthRev, past_yearRev=past_yearRev)
 
@@ -1097,6 +1149,40 @@ def change_flight_status_post():
         conn.commit()
         cursor.close()
         return redirect('/change_flight_status')
+
+@app.route('/trackSpending')
+def track_spending():
+    if 'cust' not in session:
+        redirect('/')
+    start_date = date.today() - timedelta(days=365)
+    end_date = date.today()
+    return render_template('track_spending.html', startdate=start_date, enddate=end_date)
+
+@app.route('/trackSpendingPost', methods=['GET', 'POST'])
+def track_spending_post():
+    if 'cust' not in session:
+        redirect('/')
+
+    start = request.form['start']
+    end = request.form['end']
+
+    # filter by date and split into months
+    cursor = conn.cursor()
+    query = 'SELECT YEAR(purchase_date) as y, MONTH(purchase_date) as m, sum(sold_price) as s FROM ticket WHERE customer_email = %s and purchase_date >= %s and purchase_date <= %s' \
+            ' GROUP BY YEAR(purchase_date), MONTH(purchase_date) ORDER BY purchase_date DESC'
+    cursor.execute(query, (session['cust'], start, end))
+    data = cursor.fetchall()
+
+    cursor = conn.cursor()
+    query = 'SELECT sum(sold_price) as s FROM ticket WHERE customer_email = %s and purchase_date >= %s and purchase_date <= %s'
+    cursor.execute(query, (session['cust'], start, end))
+    total = cursor.fetchone()
+
+    if not data:
+        found = None
+    else:
+        found = '${} was spent over {} distinct months. View additional information below:'.format(total['s'], len(data))
+    return render_template('track_spending.html', data=data, found=found)
 
 
 @app.route('/logout')
