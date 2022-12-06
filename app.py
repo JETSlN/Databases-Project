@@ -960,7 +960,7 @@ def view_particular_customer_post():
     #get all flights of that customer
     cursor = conn.cursor()
     query = 'SELECT * from flight, ticket where flight.flight_num = ticket.flight_num ' \
-            'and customer_email = %s and flight.airline_name = %s and flight.airline_name = ticket.airline_name;'
+            'and customer_email = %s and flight.airline_name = %s and flight.airline_name = ticket.airline_name and flight.flight_dept_date = ticket.flight_dept_date and flight.flight_dept_time = ticket.flight_dept_time;'
     cursor.execute(query, (customer, (airline_name['airline_name'])))
     data = cursor.fetchall() # holds the airline name the staff works for
     cursor.close()
