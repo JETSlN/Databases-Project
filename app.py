@@ -1033,6 +1033,9 @@ def view_earned_revenue():
     past_monthRev = cursor.fetchone() # holds the revenue for past month
     cursor.close()
 
+    if not past_monthRev['total']:
+        past_monthRev['total'] = 0
+
     # get earned revenue for past year
     cursor = conn.cursor()
     query = 'select sum(sold_price) as total from ticket ' \
@@ -1040,6 +1043,9 @@ def view_earned_revenue():
     cursor.execute(query, (airline_name['airline_name']))
     past_yearRev = cursor.fetchone() # holds the revenue for past year
     cursor.close()
+
+    if not past_yearRev['total']:
+        past_yearRev['total'] = 0
 
     return render_template("view_earned_revenue.html", past_monthRev=past_monthRev, past_yearRev=past_yearRev)
 
