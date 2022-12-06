@@ -30,6 +30,14 @@
 
     <input type="text" name="airplane_id" placeholder="Airplane ID" required></br>
 
+	
+	<p>The below field is OPTIONAL is for linking this flight as a return flight to the below departure flight:</p>
+	<input type="text" name = "dept_flight_num" placeholder="Departure Flight Number"/> </br>
+    <text>Arrival Date </text>
+	<input type="date" name = "dept_flight_date"/> </br>
+    <text>Arrival Time </text>
+	<input type="time" name = "dept_flight_time"/> </br>
+
 	<input type="submit" value = "Add Flight" />
 	{% if error %}
 		<p class="error"><strong>Error:</strong> {{error}}</p>
