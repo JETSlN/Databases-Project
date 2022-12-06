@@ -144,6 +144,19 @@ def staff_registerAuth():
     password = hashlib.md5(request.form['password'].encode()).hexdigest()
     fname = request.form['first name']
     lname = request.form['last name']
+    phone = request.form['phonenum']
+    email = request.form['email']
+    phone = phone.split(",")
+    email = email.split(",")
+
+    for x in phone:
+        try:
+            int(x)
+        except:
+            return render_template('staff_register.html', error="Invalid number use number format")
+
+
+
     airline_name = request.form['airline name']
     dob = request.form['DOB']
 
@@ -172,9 +185,23 @@ def staff_registerAuth():
         return render_template('staff_register.html', error=error)
     else:
         ins = 'INSERT INTO airlinestaff VALUES(%s, %s, %s, %s, %s, %s)'
+
         cursor.execute(ins, (username, password, fname, lname, dob, airline_name))
         conn.commit()
         cursor.close()
+        for x in phone:
+            cursor = conn.cursor()
+            ins = 'INSERT INTO staffphone VALUES(%s, %s)'
+            cursor.execute(ins, (username, x.strip()))
+            conn.commit()
+            cursor.close()
+        for x in email:
+            cursor = conn.cursor()
+            ins = 'INSERT INTO staffemail VALUES(%s, %s)'
+            cursor.execute(ins, (username, x.strip()))
+            conn.commit()
+            cursor.close()
+
         return redirect('/')
 
 
