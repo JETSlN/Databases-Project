@@ -905,8 +905,8 @@ def view_most_freq_customer():
 
     #get a list of the most frequent customers
     cursor = conn.cursor()
-    query = 'SELECT customer, frequency from customer_frequency where frequency = %s'
-    cursor.execute(query, most_freq['max(frequency)'])
+    query = 'SELECT customer, frequency from customer_frequency where frequency = %s and airline_name = %s'
+    cursor.execute(query, (most_freq['max(frequency)'], airline_name['airline_name']))
     data = cursor.fetchall() # holds the [most frequent customer, frequency]
     cursor.close()
 
