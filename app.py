@@ -1030,7 +1030,7 @@ def view_earned_reports_post():
     cursor.close()
 
 
-    month = {'01':'Janauary','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'}
+    month = {'1':'Janauary','2':'February','3':'March','4':'April','5':'May','6':'June','7':'July','8':'August','9':'September','10':'October','11':'November','12':'December'}
 
     if data1:
         for line in data1:
