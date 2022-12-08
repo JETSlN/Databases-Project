@@ -386,7 +386,7 @@ def add_flightPost():
     cursor.close()
     error = None
     if(data):
-        error = 'Airplane ID already exists.'
+        error = 'Flight already exist.'
         return render_template('add_flight.html', error=error)
     else:
         # Check if departure flight is valid (link this flight as a return flight)
